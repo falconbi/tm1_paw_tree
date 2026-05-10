@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" href="/paw-tree/favicon.svg" type="image/svg+xml">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TM1 Workbook Tree</title>
+<rect x='6' y='5' width='12' height='15' rx='2' fill='%23388bfd' fill-opacity='0.25' stroke='%23388bfd' stroke-width='1.5'/><line x1='9' y1='10' x2='15' y2='10' stroke='%23388bfd' stroke-width='1.2'/><line x1='9' y1='13' x2='15' y2='13' stroke='%23388bfd' stroke-width='1.2'/><line x1='9' y1='16' x2='12' y2='16' stroke='%23388bfd' stroke-width='1.2'/><rect x='14' y='14' width='12' height='13' rx='2' fill='%23a371f7' fill-opacity='0.25' stroke='%23a371f7' stroke-width='1.5'/><line x1='17' y1='19' x2='23' y2='19' stroke='%23a371f7' stroke-width='1.2'/><line x1='17' y1='22' x2='23' y2='22' stroke='%23a371f7' stroke-width='1.2'/><line x1='5' y1='8' x2='8' y2='8' stroke='%23e3b341' stroke-width='1.5'/><line x1='5' y1='14' x2='8' y2='14' stroke='%23e3b341' stroke-width='1.5'/><line x1='5' y1='20' x2='8' y2='20' stroke='%23e3b341' stroke-width='1.5'/></svg>">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:      #0d1117;
+  --surface: #161b22;
+  --card:    #1c2333;
+  --border:  #30363d;
+  --faint:   #21262d;
+  --text:    #e6edf3;
+  --text2:   #c9d1d9;
+  --muted:   #7d8590;
+  --blue:    #388bfd;
+  --purple:  #a371f7;
+  --amber:   #e3b341;
+  --teal:    #3fb950;
+  --coral:   #f78166;
+  --pink:    #f778ba;
+  --gray:    #6e7681;
+  --accent:  #388bfd;
+  --accent2: #1f6feb;
+  --font-ui: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+:root.light {
+  --bg:      #f6f8fa;
+  --surface: #ffffff;
+  --card:    #f0f2f5;
+  --border:  #d0d7de;
+  --faint:   #e8eaed;
+  --text:    #1f2328;
+  --text2:   #36393d;
+  --muted:   #636c76;
+  --blue:    #0969da;
+  --purple:  #8250df;
+  --amber:   #9a6700;
+  --teal:    #1a7f37;
+  --coral:   #cf222e;
+  --pink:    #bf3989;
+  --gray:    #848d97;
+  --accent:  #0969da;
+  --accent2: #0550ae;
+}
+
+html, body { height: 100%; font-family: var(--font-ui); background: var(--bg); color: var(--text); font-size: 13px; overflow: hidden; }
+body { display: flex; flex-direction: column; }
+
+/* TOP BAR */
+#topbar {
+  display: flex; align-items: center; gap: 14px;
+  padding: 0 16px; height: 44px;
+  background: var(--surface); border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+.brand { display: flex; align-items: center; gap: 8px; }
+.logo { width: 24px; height: 24px; background: var(--accent2); border-radius: 5px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: #fff; }
+.title { font-weight: 700; font-size: 13px; letter-spacing: -0.02em; }
+.subtitle { color: var(--muted); font-size: 11px; border-left: 1px solid var(--border); padding-left: 10px; }
+.spacer { flex: 1; }
+.stat { display: flex; gap: 4px; align-items: baseline; }
+.stat-val { font-family: monospace; font-size: 13px; font-weight: 600; }
+.stat-lbl { font-size: 11px; color: var(--muted); }
+.live-pill { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); background: var(--faint); border: 1px solid var(--border); border-radius: 10px; padding: 2px 8px; }
+.live-dot { color: var(--teal); font-size: 7px; }
+.theme-toggle { display: flex; align-items: center; gap: 5px; cursor: pointer; font-size: 11px; color: var(--muted); padding: 3px 7px; border-radius: 5px; border: 1px solid var(--border); }
+.theme-track { width: 26px; height: 13px; background: var(--faint); border-radius: 7px; position: relative; border: 1px solid var(--border); transition: background 0.2s; }
+.theme-track.on { background: var(--accent2); }
+.theme-thumb { position: absolute; top: 1px; left: 1px; width: 9px; height: 9px; border-radius: 50%; background: var(--muted); transition: transform 0.2s, background 0.2s; }
+.theme-track.on .theme-thumb { transform: translateX(13px); background: #fff; }
+
+/* TOOLBAR */
+#toolbar {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 14px; border-bottom: 1px solid var(--border);
+  background: var(--surface); flex-shrink: 0;
+}
+#search-box { display: flex; align-items: center; gap: 6px; background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 5px 10px; width: 320px; }
+#search-box input { background: none; border: none; outline: none; color: var(--text); font-size: 12px; width: 100%; font-family: inherit; }
+.clear-btn { color: var(--muted); cursor: pointer; font-size: 14px; line-height: 1; display: none; }
+#group-filter-wrap { display: flex; align-items: center; gap: 5px; padding: 5px 10px; background: var(--card); border: 1px solid var(--border); border-radius: 6px; }
+#group-filter-wrap.active { border-color: var(--accent); }
+#group-select { background: none; border: none; color: var(--text); font-size: 12px; font-family: var(--font-ui); outline: none; cursor: pointer; }
+#group-select option { background: var(--surface); color: var(--text); }
+#toolbar-spacer { flex: 1; }
+#tree-count { font-size: 11px; color: var(--muted); }
+
+/* TREE */
+#tree-wrap { flex: 1; overflow-y: auto; background: var(--bg); padding: 8px 0; }
+
+.tree-row {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 14px; cursor: pointer; min-height: 32px;
+  border-left: 2px solid transparent; transition: background 0.1s; user-select: none;
+}
+.tree-row:hover { background: rgba(255,255,255,0.04); }
+.tree-row.active { background: rgba(56,139,253,0.1); border-left-color: var(--blue); }
+:root.light .tree-row:hover { background: rgba(0,0,0,0.04); }
+:root.light .tree-row.active { background: rgba(9,105,218,0.08); }
+
+.chevron { width: 10px; flex-shrink: 0; transition: transform 0.15s; display: flex; align-items: center; }
+.chevron.open { transform: rotate(90deg); }
+.node-label { font-size: 13px; font-weight: 500; white-space: nowrap; min-width: 140px; max-width: 280px; overflow: hidden; text-overflow: ellipsis; }
+.node-label.folder { color: var(--text2); }
+.node-label.book { color: var(--text2); font-weight: 400; }
+.tree-row.active .node-label { color: var(--text); }
+.node-path { font-size: 10px; color: var(--muted); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 10px; }
+.node-meta { display: flex; gap: 16px; align-items: center; flex-shrink: 0; }
+.meta-chip { font-size: 10px; color: var(--muted); white-space: nowrap; }
+.meta-chip b { color: var(--text2); font-weight: 500; }
+.book-count { font-size: 10px; color: var(--muted); background: var(--faint); padding: 1px 6px; border-radius: 8px; }
+.tree-children { border-left: 1px solid var(--border); margin-left: 22px; }
+
+/* DRAWER */
+#detail-drawer {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: var(--surface); border-top: 2px solid var(--border);
+  transform: translateY(100%); transition: transform 0.22s cubic-bezier(.4,0,.2,1);
+  z-index: 100; max-height: 52vh; display: flex; flex-direction: column;
+  box-shadow: 0 -8px 32px rgba(0,0,0,0.4);
+}
+#detail-drawer.open { transform: translateY(0); }
+#drawer-header { display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+#drawer-title { font-size: 14px; font-weight: 600; color: var(--text); flex: 1; }
+#drawer-type { font-size: 11px; color: var(--muted); }
+#drawer-close { cursor: pointer; color: var(--muted); font-size: 20px; line-height: 1; padding: 0 6px; border-radius: 3px; }
+#drawer-close:hover { color: var(--text); background: var(--faint); }
+#drawer-body { overflow-y: auto; padding: 14px 16px; flex: 1; }
+
+/* DETAIL CONTENT */
+.detail-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); gap: 10px; margin-bottom: 14px; }
+.detail-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 3px; }
+.detail-val { font-size: 12px; color: var(--text2); }
+.detail-val.mono { font-family: monospace; font-size: 11px; word-break: break-all; }
+.section-lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; margin: 10px 0 6px; }
+
+.page-card { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-radius: 5px; cursor: pointer; border: 1px solid var(--border); margin-bottom: 5px; background: var(--card); transition: border-color 0.1s; }
+.page-card:hover { border-color: var(--accent); }
+.page-card.active { border-color: var(--accent); background: rgba(56,139,253,0.06); }
+.page-num { width: 18px; height: 18px; border-radius: 4px; background: var(--faint); font-size: 10px; color: var(--muted); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.page-name { font-size: 12px; color: var(--text); flex: 1; }
+.page-sub { font-size: 10px; color: var(--muted); }
+.page-expand { display: none; padding: 8px 10px 10px 36px; border: 1px solid var(--border); border-top: none; border-radius: 0 0 5px 5px; margin-top: -5px; margin-bottom: 5px; background: var(--faint); }
+.page-expand.open { display: block; }
+.pe-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px,1fr)); gap: 8px; }
+
+.perm-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 10px; border: 1px solid; margin: 2px; }
+
+@keyframes pulse { 0%,100% { opacity:.3; } 50% { opacity:.7; } }
+.skeleton { height: 28px; background: var(--faint); border-radius: 4px; animation: pulse 1.4s ease-in-out infinite; margin-bottom: 6px; }
+
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--faint); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border); }
+
+/* CUBE / VIEW FILTER */
+.cube-view-wrap { display: flex; align-items: center; gap: 5px; padding: 5px 10px; background: var(--card); border: 1px solid var(--border); border-radius: 6px; }
+.cube-view-wrap.active { border-color: var(--blue); }
+#cube-select, #view-select { background: none; border: none; color: var(--text); font-size: 12px; font-family: var(--font-ui); outline: none; cursor: pointer; max-width: 160px; }
+#cube-select option, #view-select option { background: var(--surface); color: var(--text); }
+#view-select:disabled { opacity: 0.4; cursor: default; }
+
+
+/* MDX inline in drawer tab expand */
+.mdx-pre-inline { font-family: 'Courier New', monospace; font-size: 10px; color: var(--blue); background: var(--bg); padding: 8px 10px; border-radius: 4px; overflow-x: auto; white-space: pre; margin-top: 4px; border: 1px solid var(--border); display: block; line-height: 1.5; max-height: 140px; }
+
+/* PAGE TABS */
+#tab-strip { display: flex; align-items: center; gap: 2px; padding: 0 14px; background: var(--surface); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.tab-btn { padding: 8px 16px; font-size: 12px; font-family: var(--font-ui); color: var(--muted); background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; transition: color .15s, border-color .15s; margin-bottom: -1px; }
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active { color: var(--text); border-bottom-color: var(--accent); font-weight: 500; }
+
+/* DASHBOARD */
+#dashboard-wrap { flex: 1; overflow-y: auto; padding: 18px 20px; display: none; }
+.dash-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin-bottom: 24px; }
+.dash-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
+.dash-card-val { font-size: 32px; font-weight: 700; line-height: 1; margin-bottom: 5px; font-family: monospace; }
+.dash-card-lbl { font-size: 11px; color: var(--muted); }
+.dash-section { margin-bottom: 28px; }
+.dash-section-title { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 8px; display: flex; align-items: baseline; gap: 8px; }
+.dash-section-count { font-size: 12px; font-weight: 600; color: var(--text2); letter-spacing: 0; text-transform: none; }
+.dash-table { width: 100%; border-collapse: collapse; font-size: 12px; background: var(--card); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+.dash-table th { text-align: left; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; padding: 8px 12px; border-bottom: 1px solid var(--border); font-weight: 500; background: var(--faint); }
+.dash-table td { padding: 8px 12px; border-bottom: 1px solid var(--faint); color: var(--text2); vertical-align: middle; }
+.dash-table tbody tr:last-child td { border-bottom: none; }
+.dash-table tbody tr:hover td { background: rgba(255,255,255,.02); }
+:root.light .dash-table tbody tr:hover td { background: rgba(0,0,0,.02); }
+.dash-empty { font-size: 11px; color: var(--muted); font-style: italic; padding: 10px 0; }
+.dash-book-name { font-weight: 500; color: var(--text); }
+.dash-stale-badge { display: inline-block; padding: 1px 7px; border-radius: 4px; font-size: 10px; font-family: monospace; border: 1px solid var(--coral); color: var(--coral); }
+.dash-never-badge { display: inline-block; padding: 1px 7px; border-radius: 4px; font-size: 10px; border: 1px solid var(--coral); color: var(--coral); background: rgba(247,129,102,.08); }
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <div class="brand">
+    <div class="logo">G</div>
+    <span class="title">TM1 Workbook Tree</span>
+    <span class="subtitle">PAW Book Explorer</span>
+  </div>
+  <div class="spacer"></div>
+  <div class="stat"><span class="stat-val" id="stat-folders" style="color:var(--amber)">0</span><span class="stat-lbl">folders</span></div>
+  <div class="stat"><span class="stat-val" id="stat-books"   style="color:var(--blue)">0</span><span class="stat-lbl">books</span></div>
+  <div class="stat"><span class="stat-val" id="stat-pages"   style="color:var(--muted)">0</span><span class="stat-lbl">pages</span></div>
+  <div class="live-pill"><span class="live-dot">●</span><span id="pawHostPill">PAW</span></div>
+  <div class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle light / dark mode">
+    <span id="themeIcon">🌙</span>
+    <div class="theme-track" id="themeTrack"><div class="theme-thumb"></div></div>
+    <span id="themeLabel">Dark</span>
+  </div>
+</div>
+
+<div id="tab-strip">
+  <button class="tab-btn active" id="tab-tree-btn" onclick="switchTab('tree')">Tree</button>
+  <button class="tab-btn" id="tab-dashboard-btn" onclick="switchTab('dashboard')">Dashboard</button>
+</div>
+
+<div id="toolbar">
+  <div id="search-box">
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="5.5" cy="5.5" r="3.5" stroke="#8b949e" stroke-width="1.1"/><line x1="8.5" y1="8.5" x2="11" y2="11" stroke="#8b949e" stroke-width="1.1" stroke-linecap="round"/></svg>
+    <input id="search-input" placeholder="Search books, folders, cubes…" oninput="onSearch(this.value)">
+    <span class="clear-btn" id="clear-btn" onclick="clearSearch()">×</span>
+  </div>
+  <div id="group-filter-wrap">
+    <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><circle cx="4" cy="4" r="3" stroke="var(--muted)" stroke-width="1.1"/><circle cx="4" cy="4" r="1.2" fill="var(--muted)"/><line x1="6.5" y1="6.5" x2="10" y2="10" stroke="var(--muted)" stroke-width="1.1" stroke-linecap="round"/></svg>
+    <select id="group-select" onchange="onGroupFilter(this.value)">
+      <option value="">All groups</option>
+    </select>
+  </div>
+  <div id="cube-filter-wrap" class="cube-view-wrap">
+    <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><rect x="1" y="4" width="9" height="6" rx="1" stroke="var(--muted)" stroke-width="1.1"/><path d="M3 4V3a2 2 0 0 1 5 0v1" stroke="var(--muted)" stroke-width="1.1" fill="none"/></svg>
+    <select id="cube-select" onchange="onCubeFilter(this.value)">
+      <option value="">All cubes</option>
+    </select>
+  </div>
+  <div id="view-filter-wrap" class="cube-view-wrap">
+    <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><rect x="1" y="1" width="9" height="9" rx="1.5" stroke="var(--muted)" stroke-width="1.1"/><line x1="1" y1="4" x2="10" y2="4" stroke="var(--muted)" stroke-width=".8"/></svg>
+    <select id="view-select" onchange="onViewFilter(this.value)" disabled>
+      <option value="">All views</option>
+    </select>
+  </div>
+  <div id="dim-filter-wrap" class="cube-view-wrap">
+    <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M5.5 1L10 3.5v4L5.5 10 1 7.5v-4L5.5 1z" stroke="var(--muted)" stroke-width="1.1" fill="none"/><line x1="5.5" y1="1" x2="5.5" y2="10" stroke="var(--muted)" stroke-width=".7"/></svg>
+    <select id="dim-select" onchange="onDimFilter(this.value)" disabled>
+      <option value="">All dimensions</option>
+    </select>
+  </div>
+  <div id="subset-filter-wrap" class="cube-view-wrap">
+    <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><circle cx="5.5" cy="5.5" r="4" stroke="var(--muted)" stroke-width="1.1"/><circle cx="5.5" cy="5.5" r="1.8" stroke="var(--muted)" stroke-width=".9"/></svg>
+    <select id="subset-select" onchange="onSubsetFilter(this.value)" disabled>
+      <option value="">All subsets</option>
+    </select>
+  </div>
+  <div id="toolbar-spacer"></div>
+  <div id="tree-count"></div>
+</div>
+
+
+<div id="tree-wrap"><div id="tree"></div></div>
+<div id="dashboard-wrap"></div>
+
+<div id="detail-drawer">
+  <div id="drawer-header">
+    <div id="drawer-title">—</div>
+    <span id="drawer-type"></span>
+    <a id="drawer-paw-link" href="#" target="_blank" rel="noopener" style="display:none;font-size:11px;padding:3px 10px;border-radius:4px;border:1px solid var(--border);color:var(--blue);text-decoration:none;background:var(--card);white-space:nowrap">Open in PAW ↗</a>
+    <span id="drawer-close" onclick="closeDrawer()">×</span>
+  </div>
+  <div id="drawer-body">
+    <div id="folder-detail"></div>
+    <div id="book-detail"></div>
+  </div>
+</div>
+
+<script>
+// THEME
+let isDark = true;
+function applyTheme() {
+  document.documentElement.classList.toggle('light', !isDark);
+  document.getElementById('themeIcon').textContent  = isDark ? '🌙' : '☀️';
+  document.getElementById('themeLabel').textContent = isDark ? 'Dark' : 'Light';
+  document.getElementById('themeTrack').classList.toggle('on', isDark);
+}
+function toggleTheme() {
+  isDark = !isDark; applyTheme();
+  try { localStorage.setItem('tm1-workbook-theme', isDark ? 'dark' : 'light'); } catch(e) {}
+}
+try { isDark = localStorage.getItem('tm1-workbook-theme') !== 'light'; } catch(e) {}
+applyTheme();
+
+// STATE
+let TREE         = [];
+let GROUPS       = [];
+let PAW_CONFIG   = { paw_host: '', paw_account_id: '', paw_tenant_id: '' };
+let activeGroup  = '';
+let activeCube      = '';
+let activeView      = '';
+let activeDimension = '';
+let activeSubset    = '';
+let subsetViews     = [];
+let subsetCount     = null;
+let selectedId   = null;
+let selectedNode = null;
+let openTabId    = null;
+const openIds   = new Set(['f-shared']);
+const NOW       = new Date();
+const tabMap    = {};
+
+// HELPERS
+function relTime(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso), diff = (NOW - d) / 1000;
+  if (diff < 60)    return 'just now';
+  if (diff < 3600)  return Math.floor(diff/60) + 'm ago';
+  if (diff < 86400) return Math.floor(diff/3600) + 'h ago';
+  if (diff < 86400*30) return Math.floor(diff/86400) + 'd ago';
+  return d.toLocaleDateString();
+}
+function fmtDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+}
+function flattenAll(nodes, path) {
+  path = path || [];
+  let out = [];
+  for (const n of nodes) {
+    n._path = [...path, n.name];
+    out.push(n);
+    if (n.children) out = out.concat(flattenAll(n.children, n._path));
+  }
+  return out;
+}
+function countBooks(node) {
+  let c = node.type === 'book' ? 1 : 0;
+  for (const ch of (node.children||[])) c += countBooks(ch);
+  return c;
+}
+function findNode(id, nodes) {
+  for (const n of nodes) {
+    if (n.id === id) return n;
+    const f = findNode(id, n.children||[]);
+    if (f) return f;
+  }
+  return null;
+}
+function statusColor(s) {
+  if (s === 'Draft') return 'var(--amber)';
+  return 'var(--teal)';
+}
+
+// ICONS
+function folderSVG(open) {
+  const c = open ? '#e3b341' : '#8b949e';
+  return `<svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="flex-shrink:0"><path d="M1 3.5C1 2.67 1.67 2 2.5 2H5l1.5 1.5H11.5C12.33 3.5 13 4.17 13 5v5.5C13 11.33 12.33 12 11.5 12h-9C1.67 12 1 11.33 1 10.5V3.5z" fill="${c}" fill-opacity="${open?'.25':'.15'}" stroke="${c}" stroke-width="1"/></svg>`;
+}
+function bookSVG(color) {
+  return `<svg width="13" height="14" viewBox="0 0 13 14" fill="none" style="flex-shrink:0"><rect x="1" y="1" width="11" height="12" rx="2" fill="${color}" fill-opacity=".15" stroke="${color}" stroke-width="1"/><line x1="3.5" y1="4.5" x2="9.5" y2="4.5" stroke="${color}" stroke-width=".9"/><line x1="3.5" y1="6.5" x2="9.5" y2="6.5" stroke="${color}" stroke-width=".9"/><line x1="3.5" y1="8.5" x2="7" y2="8.5" stroke="${color}" stroke-width=".9"/></svg>`;
+}
+function tabSVG() {
+  return `<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="1" y="1" width="10" height="10" rx="1.5" stroke="var(--blue)" stroke-width="1"/><line x1="1" y1="4" x2="11" y2="4" stroke="var(--blue)" stroke-width=".8"/></svg>`;
+}
+
+// STATS
+function updateStats() {
+  const all     = flattenAll(TREE);
+  const books   = all.filter(n => n.type === 'book');
+  const folders = all.filter(n => n.type === 'folder');
+  const pages   = books.flatMap(b => b.tabs||[]);
+  document.getElementById('stat-folders').textContent = folders.length;
+  document.getElementById('stat-books').textContent   = books.length;
+  document.getElementById('stat-pages').textContent   = pages.length;
+  document.getElementById('tree-count').textContent   =
+    folders.length + ' folder' + (folders.length!==1?'s':'') + ' · ' +
+    books.length + ' book' + (books.length!==1?'s':'') + ' · ' +
+    pages.length + ' page' + (pages.length!==1?'s':'');
+}
+
+// TREE RENDER
+function renderTree(nodes) {
+  const hasBooks = flattenAll(nodes).some(function(n) { return n.type === 'book'; });
+  if (!hasBooks && (activeCube || activeView || activeGroup)) {
+    document.getElementById('tree').innerHTML =
+      '<div style="padding:18px 14px;font-size:11px;color:var(--muted)">No books match the current filters.</div>';
+    return;
+  }
+  document.getElementById('tree').innerHTML = buildTreeHTML(nodes, 0);
+  attachHandlers();
+}
+function buildTreeHTML(nodes, depth) {
+  return nodes.map(n => buildNodeHTML(n, depth)).join('');
+}
+function buildNodeHTML(node, depth) {
+  const isOpen  = openIds.has(node.id);
+  const isSel   = selectedId === node.id;
+  const hasKids = (node.children||[]).length > 0;
+  const tabs    = node.tabs||[];
+  const cubes   = [...new Set(tabs.map(t=>t.cube).filter(Boolean))];
+  const bkCount = countBooks(node) - (node.type==='book'?1:0);
+
+  const chevSVG = hasKids
+    ? '<svg width="9" height="9" viewBox="0 0 9 9" fill="none"><path d="M3 2l3 2.5L3 7" stroke="#8b949e" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+    : '';
+  const chevCls = 'chevron' + (isOpen ? ' open' : '');
+  const bookColor = node.private ? 'var(--amber)' : statusColor(node.status||'Published');
+  const icon    = node.type === 'folder' ? folderSVG(isOpen) : bookSVG(bookColor);
+  const lCls    = 'node-label ' + (node.type === 'folder' ? 'folder' : 'book');
+  const rCls    = 'tree-row' + (isSel ? ' active' : '');
+
+  let meta = '<div class="node-meta">';
+  if (node.type === 'folder') {
+    if (bkCount > 0) meta += '<span class="book-count">' + bkCount + ' book' + (bkCount!==1?'s':'') + '</span>';
+  } else {
+    if (node.private && node.owner) meta += '<span class="meta-chip" style="color:var(--amber);border:1px solid var(--amber);border-radius:4px;padding:1px 5px">🔒 ' + node.owner + '</span>';
+    if (tabs.length)  meta += '<span class="meta-chip">' + tabs.length + ' page' + (tabs.length!==1?'s':'') + '</span>';
+    if (cubes.length) meta += '<span class="meta-chip">Cubes: <b>' + cubes.join(', ') + '</b></span>';
+    if (node.modifiedBy) meta += '<span class="meta-chip">Modified <b>' + relTime(node.modifiedDate) + '</b> by <b>' + node.modifiedBy + '</b></span>';
+  }
+  meta += '</div>';
+
+  let html = '<div class="tree-node"><div class="' + rCls + '" data-id="' + node.id + '" style="padding-left:' + (14+depth*20) + 'px">'
+    + '<span class="' + chevCls + '">' + chevSVG + '</span>'
+    + icon
+    + '<span class="' + lCls + '">' + node.name + '</span>'
+    + '<span class="node-path">' + (node.path||'') + '</span>'
+    + meta
+    + '</div>';
+
+  if (hasKids) {
+    html += '<div class="tree-children" id="ch-' + node.id + '" style="display:' + (isOpen?'block':'none') + '">'
+      + buildTreeHTML(node.children, depth+1)
+      + '</div>';
+  }
+  return html + '</div>';
+}
+function attachHandlers() {
+  document.querySelectorAll('.tree-row').forEach(function(row) {
+    row.addEventListener('click', function() {
+      const id   = row.dataset.id;
+      const node = findNode(id, TREE);
+      if (!node) return;
+      if (node.type === 'folder') {
+        if (openIds.has(id)) openIds.delete(id); else openIds.add(id);
+        const kids = document.getElementById('ch-' + id);
+        if (kids) kids.style.display = openIds.has(id) ? 'block' : 'none';
+        const chev = row.querySelector('.chevron');
+        if (chev) chev.classList.toggle('open', openIds.has(id));
+        const iconEl = row.querySelector('svg');
+        if (iconEl) iconEl.outerHTML = folderSVG(openIds.has(id));
+      }
+      document.querySelectorAll('.tree-row.active').forEach(function(r) { r.classList.remove('active'); });
+      row.classList.add('active');
+      selectedId = id;
+      showDetail(node);
+    });
+  });
+}
+
+// SEARCH
+function onSearch(q) {
+  document.getElementById('clear-btn').style.display = q ? 'block' : 'none';
+  if (!q.trim()) { renderTree(getFilteredTree()); return; }
+  const lq   = q.toLowerCase();
+  const hits = flattenAll(TREE).filter(function(n) {
+    return n.name.toLowerCase().includes(lq) ||
+      (n.path||'').toLowerCase().includes(lq) ||
+      (n.tabs||[]).some(function(t) { return (t.cube||'').toLowerCase().includes(lq) || t.name.toLowerCase().includes(lq); });
+  }).slice(0, 30);
+  const tree = document.getElementById('tree');
+  tree.innerHTML = '<div style="font-size:10px;color:var(--muted);padding:6px 14px 8px;text-transform:uppercase;letter-spacing:.06em">' + hits.length + ' result' + (hits.length!==1?'s':'') + '</div>'
+    + hits.map(function(n) {
+      const icon = n.type === 'folder' ? folderSVG(false) : bookSVG(statusColor(n.status||''));
+      return '<div class="tree-row" data-id="' + n.id + '">'
+        + '<span class="chevron"></span>' + icon
+        + '<span class="node-label ' + (n.type==='folder'?'folder':'book') + '">' + n.name + '</span>'
+        + '<span class="node-path">' + (n._path||[]).slice(0,-1).join(' › ') + '</span>'
+        + '</div>';
+    }).join('');
+  tree.querySelectorAll('.tree-row').forEach(function(row) {
+    row.addEventListener('click', function() {
+      const node = findNode(row.dataset.id, TREE);
+      if (node) { selectedId = node.id; showDetail(node); }
+    });
+  });
+}
+function clearSearch() {
+  document.getElementById('search-input').value = '';
+  document.getElementById('clear-btn').style.display = 'none';
+  renderTree(getFilteredTree());
+}
+
+// DRAWER
+function openDrawer(node) {
+  document.getElementById('drawer-title').textContent = node.name;
+  document.getElementById('drawer-type').textContent  = node.assetType || node.type;
+  document.getElementById('detail-drawer').classList.add('open');
+  document.getElementById('folder-detail').innerHTML = '';
+  document.getElementById('book-detail').innerHTML   = '';
+  var pawLink = document.getElementById('drawer-paw-link');
+  var url = node.type === 'book' ? pawBookUrl(node.id) : null;
+  if (url) {
+    pawLink.href = url;
+    pawLink.style.display = '';
+  } else {
+    pawLink.style.display = 'none';
+  }
+}
+function closeDrawer() {
+  document.getElementById('detail-drawer').classList.remove('open');
+  document.querySelectorAll('.tree-row.active').forEach(function(r) { r.classList.remove('active'); });
+  selectedId   = null;
+  selectedNode = null;
+}
+function showDetail(node) {
+  selectedNode = node;
+  openDrawer(node);
+  if (node.type === 'folder') showFolderDetail(node);
+  else showBookDetail(node);
+}
+
+// FOLDER DETAIL
+function showFolderDetail(node) {
+  const el      = document.getElementById('folder-detail');
+  const books   = (node.children||[]).filter(function(c) { return c.type === 'book'; });
+  const subs    = (node.children||[]).filter(function(c) { return c.type === 'folder'; });
+  const total   = countBooks(node);
+
+  let html = '<div class="detail-grid">'
+    + '<div><div class="detail-label">Path</div><div class="detail-val mono">' + (node.path||'—') + '</div></div>'
+    + '<div><div class="detail-label">Contents</div><div class="detail-val">' + total + ' book' + (total!==1?'s':'') + ' · ' + subs.length + ' subfolder' + (subs.length!==1?'s':'') + '</div></div>'
+    + (node.createdBy ? '<div><div class="detail-label">Created by</div><div class="detail-val">' + node.createdBy + '</div></div>' : '')
+    + (node.modifiedDate ? '<div><div class="detail-label">Last modified</div><div class="detail-val">' + fmtDate(node.modifiedDate) + '</div></div>' : '')
+    + (node.modifiedBy ? '<div><div class="detail-label">Modified by</div><div class="detail-val">' + node.modifiedBy + '</div></div>' : '')
+    + '</div>';
+
+  if (activeGroup) {
+    const g = GROUPS.find(function(g) { return g.id === activeGroup; });
+    const perms = (g && g.folder_permissions && g.folder_permissions[node.path]) || [];
+    const pc = { list:'var(--muted)', open:'var(--blue)', write:'var(--teal)', manage:'var(--amber)', secure:'var(--coral)' };
+    html += '<div class="section-lbl">' + (g?g.name:'') + ' permissions on this folder</div><div style="margin-bottom:10px">';
+    if (perms.length) {
+      perms.forEach(function(p) { html += '<span class="perm-badge" style="color:' + (pc[p]||'var(--text)') + ';border-color:' + (pc[p]||'var(--border)') + '">' + p + '</span>'; });
+    } else {
+      html += '<span style="font-size:11px;color:var(--coral)">No access</span>';
+    }
+    html += '</div>';
+  }
+
+  if (subs.length) {
+    html += '<div class="section-lbl">Subfolders · ' + subs.length + '</div>';
+    subs.forEach(function(f) {
+      html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)">'
+        + folderSVG(false)
+        + '<span style="font-size:12px;color:var(--text2)">' + f.name + '</span>'
+        + '<span style="font-size:10px;color:var(--muted);margin-left:auto">' + countBooks(f) + ' books</span></div>';
+    });
+  }
+  if (books.length) {
+    html += '<div class="section-lbl" style="margin-top:10px">Books · ' + books.length + '</div>';
+    books.forEach(function(b) {
+      const cubes = [...new Set((b.tabs||[]).map(function(t){return t.cube;}).filter(Boolean))];
+      html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)">'
+        + bookSVG(statusColor(b.status||'Published'))
+        + '<div style="flex:1"><div style="font-size:12px;color:var(--text2)">' + b.name + '</div>'
+        + (cubes.length ? '<div style="font-size:10px;color:var(--muted)">' + cubes.join(', ') + '</div>' : '')
+        + '</div><span style="font-size:10px;color:var(--muted)">' + relTime(b.modifiedDate) + '</span></div>';
+    });
+  }
+  el.innerHTML = html;
+}
+
+// BOOK DETAIL
+function showBookDetail(node) {
+  const el   = document.getElementById('book-detail');
+  const tabs = node.tabs||[];
+  tabs.forEach(function(tab) { tabMap[tab.id] = tab; });
+  const tc   = node.assetType === 'workbench' ? 'Workbench' : 'Dashboard';
+  const tcol = node.assetType === 'workbench' ? 'var(--purple)' : 'var(--blue)';
+
+  // ── Section 1: Book metadata (always shown) ────────────────────────────────
+  const visLabel = node.private ? '<span style="color:var(--amber)">🔒 Private</span>' : '<span style="color:var(--teal)">Shared</span>';
+  let html = '<div class="detail-grid">'
+    + '<div><div class="detail-label">Type</div><div class="detail-val" style="color:' + tcol + '">' + tc + '</div></div>'
+    + '<div><div class="detail-label">Visibility</div><div class="detail-val">' + visLabel + '</div></div>'
+    + (node.private && node.owner ? '<div><div class="detail-label">Owner</div><div class="detail-val" style="color:var(--amber)">' + node.owner + '</div></div>' : '')
+    + '<div><div class="detail-label">Path</div><div class="detail-val mono">' + (node.path||'—') + '</div></div>'
+    + '<div><div class="detail-label">Created by</div><div class="detail-val">' + (node.createdBy||'—') + '</div></div>'
+    + '<div><div class="detail-label">Created</div><div class="detail-val">' + fmtDate(node.createdDate) + '</div></div>'
+    + '<div><div class="detail-label">Last modified by</div><div class="detail-val">' + (node.modifiedBy||'—') + '</div></div>'
+    + '<div><div class="detail-label">Last modified</div><div class="detail-val">' + fmtDate(node.modifiedDate) + '</div></div>'
+    + '<div><div class="detail-label">Last opened by</div><div class="detail-val">' + (node.usedBy||'—') + '</div></div>'
+    + '<div><div class="detail-label">Last opened</div><div class="detail-val">' + fmtDate(node.usedDate) + '</div></div>'
+    + '<div><div class="detail-label">State</div><div class="detail-val">' + (node.state||'—') + '</div></div>'
+    + '<div><div class="detail-label">Permissions</div><div class="detail-val" style="color:var(--teal)">' + ((node.permissions||[]).join(', ')||'—') + '</div></div>'
+    + '</div>';
+
+  // ── Section 1b: Subset info (when dimension + subset selected) ────────────
+  if (activeDimension && activeSubset) {
+    html += '<div class="section-lbl">SUBSET</div>'
+      + '<div style="display:flex;gap:20px;padding:6px 0 10px;border-bottom:1px solid var(--border);margin-bottom:4px">'
+      + '<div><div class="detail-label">Dimension</div><div class="detail-val mono">' + activeDimension + '</div></div>'
+      + '<div><div class="detail-label">Subset</div><div class="detail-val mono">' + activeSubset + '</div></div>'
+      + '<div><div class="detail-label">Members</div><div class="detail-val" style="color:var(--teal)">'
+      + (subsetCount !== null ? subsetCount : '—') + '</div></div>'
+      + '</div>';
+  }
+
+  if (activeCube && activeView) {
+    // ── Section 2: Tabs using this view ───────────────────────────────────────
+    const matchingTabs = tabs.filter(function(t) {
+      return t.cube === activeCube && t.view === activeView;
+    });
+    html += '<div class="section-lbl">TABS USING THIS VIEW · ' + matchingTabs.length + '</div>';
+    if (matchingTabs.length) {
+      matchingTabs.forEach(function(tab) {
+        html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)">'
+          + tabSVG()
+          + '<span style="font-size:12px;color:var(--text)">' + tab.name + '</span>'
+          + '</div>';
+      });
+    } else {
+      html += '<div style="font-size:11px;color:var(--muted);padding:4px 0">No tabs use this view.</div>';
+    }
+
+    // ── Section 3: View definition ─────────────────────────────────────────────
+    html += '<div style="display:flex;align-items:center;gap:8px;margin-top:14px;margin-bottom:6px">'
+      + '<span class="section-lbl" style="margin:0">VIEW DEFINITION</span>'
+      + '<span id="drawer-view-type" style="font-size:10px;padding:1px 7px;border-radius:4px;border:1px solid var(--border);color:var(--muted)">—</span>'
+      + '<button onclick="copyDrawerMDX()" style="margin-left:auto;font-size:10px;padding:2px 8px;border-radius:4px;border:1px solid var(--border);background:var(--card);color:var(--text);cursor:pointer" id="drawer-mdx-copy-btn">Copy</button>'
+      + '</div>'
+      + '<pre id="drawer-mdx-pre" style="font-family:\'Courier New\',monospace;font-size:10px;color:var(--blue);background:var(--bg);padding:10px;border-radius:4px;border:1px solid var(--border);overflow-x:auto;white-space:pre;line-height:1.5;margin:0;min-height:40px">Loading…</pre>';
+
+  } else {
+    // ── No filter: show all tabs ───────────────────────────────────────────────
+    if (tabs.length) {
+      html += '<div class="section-lbl">Pages · ' + tabs.length + '</div>';
+      tabs.forEach(function(tab, i) {
+        html += '<div class="page-card" onclick="toggleTab(\'' + tab.id + '\')">'
+          + '<span class="page-num">' + (i+1) + '</span>'
+          + tabSVG()
+          + '<div style="flex:1"><div class="page-name">' + tab.name + '</div>'
+          + '<div class="page-sub">' + tab.type + (tab.cube ? ' · ' + tab.cube : '') + '</div></div>'
+          + '<span style="color:var(--muted);font-size:14px">›</span></div>'
+          + '<div class="page-expand" id="expand-' + tab.id + '">'
+          + '<div class="pe-grid">'
+          + '<div><div class="detail-label">TM1 Server</div><div class="detail-val mono">' + (tab.server||'—') + '</div></div>'
+          + '<div><div class="detail-label">Cube</div><div class="detail-val mono">' + (tab.cube||'—') + '</div></div>'
+          + '<div><div class="detail-label">View</div><div class="detail-val mono">' + (tab.view||'—') + '</div></div>'
+          + '<div><div class="detail-label">Type</div><div class="detail-val">' + tab.type + '</div></div>'
+          + '</div></div>';
+      });
+    } else {
+      html += '<div style="font-size:11px;color:var(--muted);font-style:italic;padding:8px 0">No pages found.</div>';
+    }
+  }
+
+  el.innerHTML = html;
+
+  // Async: load MDX into section 3 if cube+view are selected
+  if (activeCube && activeView) {
+    fetch('/api/tm1/mdx?cube=' + encodeURIComponent(activeCube) + '&view=' + encodeURIComponent(activeView))
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        var pre  = document.getElementById('drawer-mdx-pre');
+        var type = document.getElementById('drawer-view-type');
+        if (pre)  pre.textContent  = d.mdx || d.message || ('Error: ' + (d.error||'unknown'));
+        if (type) type.textContent = d.type || '—';
+      })
+      .catch(function(e) {
+        var pre = document.getElementById('drawer-mdx-pre');
+        if (pre) pre.textContent = 'Failed: ' + e.message;
+      });
+  }
+}
+
+function copyDrawerMDX() {
+  var text = document.getElementById('drawer-mdx-pre');
+  if (!text) return;
+  navigator.clipboard.writeText(text.textContent).then(function() {
+    var btn = document.getElementById('drawer-mdx-copy-btn');
+    if (btn) { btn.textContent = 'Copied!'; setTimeout(function() { btn.textContent = 'Copy'; }, 1500); }
+  });
+}
+
+function toggleTab(tabId) {
+  var expand = document.getElementById('expand-' + tabId);
+  var row    = expand ? expand.previousElementSibling : null;
+  if (!expand || !row) return;
+  if (openTabId && openTabId !== tabId) {
+    var prev    = document.getElementById('expand-' + openTabId);
+    var prevRow = prev ? prev.previousElementSibling : null;
+    if (prev)    prev.classList.remove('open');
+    if (prevRow) prevRow.classList.remove('active');
+  }
+  var isOpen = expand.classList.contains('open');
+  expand.classList.toggle('open', !isOpen);
+  row.classList.toggle('active', !isOpen);
+  openTabId = !isOpen ? tabId : null;
+  if (!isOpen) {
+    var tab   = tabMap[tabId];
+    var mdxEl = tab && tab.cube && tab.view ? document.getElementById('mdx-inline-' + tabId) : null;
+    if (mdxEl && !mdxEl.dataset.loaded) {
+      mdxEl.dataset.loaded = '1';
+      mdxEl.textContent = 'Loading…';
+      fetch('/api/tm1/mdx?cube=' + encodeURIComponent(tab.cube) + '&view=' + encodeURIComponent(tab.view))
+        .then(function(r) { return r.json(); })
+        .then(function(d) { mdxEl.textContent = d.mdx || d.message || ('Error: ' + (d.error||'unknown')); })
+        .catch(function(e) { mdxEl.textContent = 'Failed: ' + e.message; });
+    }
+  }
+}
+
+// GROUP FILTER
+async function loadGroups() {
+  try {
+    const res  = await fetch('/api/groups');
+    const data = await res.json();
+    GROUPS = data.groups || [];
+    const sel = document.getElementById('group-select');
+    GROUPS.forEach(function(g) {
+      const opt = document.createElement('option');
+      opt.value = g.id; opt.textContent = g.name;
+      sel.appendChild(opt);
+    });
+  } catch(e) { console.warn('Groups load failed:', e); }
+}
+function onGroupFilter(groupId) {
+  activeGroup = groupId;
+  document.getElementById('group-filter-wrap').classList.toggle('active', !!groupId);
+  renderTree(getFilteredTree());
+}
+function filterByGroup(nodes, groupId) {
+  if (!groupId) return nodes;
+  const g = GROUPS.find(function(g) { return g.id === groupId; });
+  if (!g) return nodes;
+  function visible(node) {
+    const fp = g.folder_permissions || {};
+    if (node.type === 'folder') return !!fp[node.path];
+    const pp = node.path.substring(0, node.path.lastIndexOf('/'));
+    return (fp[pp]||[]).includes('open');
+  }
+  function filterNodes(nodes) {
+    return nodes.filter(visible).map(function(n) {
+      return Object.assign({}, n, {
+        children: filterNodes(n.children||[]),
+        groupPerms: (g.folder_permissions||{})[n.path] || []
+      });
+    });
+  }
+  return filterNodes(nodes);
+}
+
+// CUBE / VIEW / DIMENSION / SUBSET FILTER
+function getFilteredTree() {
+  var t = filterByGroup(TREE, activeGroup);
+  if (!activeCube) return t;
+  function tabMatches(tab) {
+    if (tab.cube !== activeCube) return false;
+    if (activeView && tab.view !== activeView) return false;
+    if (activeSubset && subsetViews.length > 0 && !subsetViews.includes(tab.view)) return false;
+    return true;
+  }
+  function bookMatches(book) { return (book.tabs||[]).some(tabMatches); }
+  function filterNodes(ns) {
+    return ns.reduce(function(acc, n) {
+      if (n.type === 'book') {
+        if (bookMatches(n)) acc.push(n);
+      } else {
+        var kids = filterNodes(n.children||[]);
+        if (kids.length) acc.push(Object.assign({}, n, {children: kids}));
+      }
+      return acc;
+    }, []);
+  }
+  return filterNodes(t);
+}
+
+function resetDimSubset() {
+  activeDimension = ''; activeSubset = ''; subsetViews = []; subsetCount = null;
+  var dimSel    = document.getElementById('dim-select');
+  var subsetSel = document.getElementById('subset-select');
+  dimSel.innerHTML    = '<option value="">All dimensions</option>';
+  subsetSel.innerHTML = '<option value="">All subsets</option>';
+  dimSel.disabled = true; subsetSel.disabled = true;
+  document.getElementById('dim-filter-wrap').classList.remove('active');
+  document.getElementById('subset-filter-wrap').classList.remove('active');
+}
+
+async function loadCubes() {
+  try {
+    var res  = await fetch('/api/tm1/cubes');
+    var data = await res.json();
+    if (data.error) return;
+    var sel = document.getElementById('cube-select');
+    (data.cubes||[]).forEach(function(c) {
+      var opt = document.createElement('option');
+      opt.value = c; opt.textContent = c; sel.appendChild(opt);
+    });
+  } catch(e) { console.warn('Cubes load failed:', e); }
+}
+
+async function onCubeFilter(cube) {
+  activeCube = cube; activeView = '';
+  resetDimSubset();
+  var viewSel = document.getElementById('view-select');
+  viewSel.innerHTML = '<option value="">All views</option>';
+  viewSel.disabled  = true;
+  document.getElementById('view-filter-wrap').classList.remove('active');
+  document.getElementById('cube-filter-wrap').classList.toggle('active', !!cube);
+  renderTree(getFilteredTree());
+  if (selectedNode && selectedNode.type === 'book') showBookDetail(selectedNode);
+  if (!cube) return;
+  try {
+    var res1 = fetch('/api/tm1/views?cube='      + encodeURIComponent(cube));
+    var res2 = fetch('/api/tm1/dimensions?cube=' + encodeURIComponent(cube));
+    var viewsData = await (await res1).json();
+    var dimsData  = await (await res2).json();
+    var dimSel = document.getElementById('dim-select');
+    (viewsData.views||[]).forEach(function(v) {
+      var opt = document.createElement('option'); opt.value = v; opt.textContent = v; viewSel.appendChild(opt);
+    });
+    (dimsData.dimensions||[]).forEach(function(d) {
+      var opt = document.createElement('option'); opt.value = d; opt.textContent = d; dimSel.appendChild(opt);
+    });
+    viewSel.disabled = false; dimSel.disabled = false;
+  } catch(e) { console.warn('Cube dependents load failed:', e); }
+}
+
+async function onViewFilter(view) {
+  activeView = view;
+  document.getElementById('view-filter-wrap').classList.toggle('active', !!view);
+  renderTree(getFilteredTree());
+  if (selectedNode && selectedNode.type === 'book') showBookDetail(selectedNode);
+}
+
+async function onDimFilter(dim) {
+  activeDimension = dim; activeSubset = ''; subsetViews = []; subsetCount = null;
+  var subsetSel = document.getElementById('subset-select');
+  subsetSel.innerHTML = '<option value="">All subsets</option>';
+  subsetSel.disabled  = true;
+  document.getElementById('dim-filter-wrap').classList.toggle('active', !!dim);
+  document.getElementById('subset-filter-wrap').classList.remove('active');
+  renderTree(getFilteredTree());
+  if (selectedNode && selectedNode.type === 'book') showBookDetail(selectedNode);
+  if (!dim) return;
+  try {
+    var res  = await fetch('/api/tm1/subsets?cube=' + encodeURIComponent(activeCube) + '&dimension=' + encodeURIComponent(dim));
+    var data = await res.json();
+    (data.subsets||[]).forEach(function(s) {
+      var opt = document.createElement('option'); opt.value = s; opt.textContent = s; subsetSel.appendChild(opt);
+    });
+    subsetSel.disabled = false;
+  } catch(e) { console.warn('Subsets load failed:', e); }
+}
+
+async function onSubsetFilter(subset) {
+  activeSubset = subset; subsetViews = []; subsetCount = null;
+  document.getElementById('subset-filter-wrap').classList.toggle('active', !!subset);
+  if (subset && activeCube && activeDimension) {
+    try {
+      var p1 = fetch('/api/tm1/views_with_subset?cube=' + encodeURIComponent(activeCube)
+                   + '&dimension=' + encodeURIComponent(activeDimension)
+                   + '&subset='    + encodeURIComponent(subset));
+      var p2 = fetch('/api/tm1/subset_info?dimension=' + encodeURIComponent(activeDimension)
+                   + '&subset='    + encodeURIComponent(subset));
+      var vd = await (await p1).json();
+      var sd = await (await p2).json();
+      subsetViews = vd.views || [];
+      subsetCount = sd.count !== undefined ? sd.count : null;
+    } catch(e) { console.warn('Subset info load failed:', e); }
+  }
+  renderTree(getFilteredTree());
+  if (selectedNode && selectedNode.type === 'book') showBookDetail(selectedNode);
+}
+
+// LIVE DATA
+function showLoading() {
+  document.getElementById('tree').innerHTML =
+    '<div style="padding:20px 14px"><div style="font-size:11px;color:var(--muted);margin-bottom:10px">Loading from PAW…</div>'
+    + [1,2,3,4,5].map(function(i) { return '<div class="skeleton" style="width:' + (50+i*10) + '%"></div>'; }).join('')
+    + '</div>';
+}
+function showError(msg) {
+  document.getElementById('tree').innerHTML =
+    '<div style="padding:18px 14px">'
+    + '<div style="font-size:11px;color:var(--coral);font-weight:600;margin-bottom:6px">⚠ Failed to load</div>'
+    + '<div style="font-size:10px;color:var(--muted);margin-bottom:10px">' + msg + '</div>'
+    + '<button onclick="loadPAWTree()" style="font-size:11px;padding:5px 12px;border-radius:4px;border:1px solid var(--border);background:var(--card);color:var(--text);cursor:pointer">Retry</button>'
+    + '</div>';
+}
+function normalise(nodes) {
+  return nodes.map(function(n) {
+    var owner = n.owner || '';
+    // For private folder nodes the PAW folder name is often a UUID — use the
+    // owner display name as the visible label instead when available.
+    var displayName = (n.type === 'folder' && n.private && owner) ? owner : n.name;
+    return Object.assign({}, n, {
+      name:     displayName,
+      status:   n.state === 'valid' ? 'Published' : 'Draft',
+      private:  n.private || false,
+      owner:    owner,
+      tabs:     (n.tabs||[]).map(function(t, i) {
+        return { id: 'tab-' + n.id + '-' + i, name: t.name,
+          type: t.cube ? 'Cube View' : 'View',
+          cube: t.cube||null, view: t.view||null, server: t.server||'' };
+      }),
+      children: normalise(n.children||[])
+    });
+  });
+}
+async function loadPAWTree() {
+  showLoading();
+  try {
+    const res  = await fetch('/api/paw/tree');
+    const data = await res.json();
+    if (data.status !== 'ok') throw new Error(data.message || 'Unknown error');
+    TREE = normalise(data.tree);
+    updateStats();
+    renderTree(TREE);
+    if (activeTab === 'dashboard') renderDashboard();
+  } catch(e) { showError(e.message); }
+}
+
+async function loadConfig() {
+  try {
+    const res  = await fetch('/api/config');
+    const data = await res.json();
+    PAW_CONFIG = data;
+    if (data.paw_host) {
+      const host = data.paw_host.replace(/^https?:\/\//, '');
+      document.getElementById('pawHostPill').textContent = host + ' · PAW';
+    }
+  } catch(e) { console.warn('Config load failed:', e); }
+}
+
+function pawBookUrl(bookId) {
+  if (!PAW_CONFIG.paw_host || !PAW_CONFIG.paw_account_id || !PAW_CONFIG.paw_tenant_id) return null;
+  return PAW_CONFIG.paw_host
+    + '/?accountId=' + encodeURIComponent(PAW_CONFIG.paw_account_id)
+    + '&tenantId='   + encodeURIComponent(PAW_CONFIG.paw_tenant_id)
+    + '&perspective=dashboard'
+    + '&id='         + encodeURIComponent(bookId);
+}
+
+loadConfig();
+loadGroups();
+loadCubes();
+loadPAWTree();
+
+// ── TAB SWITCHING ─────────────────────────────────────────────────────────────
+var activeTab = 'tree';
+function switchTab(tab) {
+  activeTab = tab;
+  document.getElementById('tab-tree-btn').classList.toggle('active', tab === 'tree');
+  document.getElementById('tab-dashboard-btn').classList.toggle('active', tab === 'dashboard');
+  document.getElementById('toolbar').style.display        = tab === 'tree' ? '' : 'none';
+  document.getElementById('tree-wrap').style.display      = tab === 'tree' ? '' : 'none';
+  document.getElementById('dashboard-wrap').style.display = tab === 'dashboard' ? 'block' : 'none';
+  if (tab === 'dashboard') {
+    if (TREE.length) renderDashboard();
+    else document.getElementById('dashboard-wrap').innerHTML =
+      '<div style="padding:20px;font-size:11px;color:var(--muted)">Loading tree data — switch back in a moment.</div>';
+  }
+  // Close drawer when switching tabs
+  document.getElementById('detail-drawer').classList.remove('open');
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────────────────────────
+function buildDashData() {
+  var allNodes = flattenAll(TREE);
+  var books    = allNodes.filter(function(n) { return n.type === 'book'; });
+  var now      = new Date();
+
+  // Build known-user set from every owner/createdBy/modifiedBy/usedBy seen in
+  // the tree — PAW user folders (owner) plus anyone who has touched a book.
+  var knownUsers = new Set();
+  allNodes.forEach(function(n) {
+    if (n.owner)      knownUsers.add(n.owner);
+    if (n.createdBy)  knownUsers.add(n.createdBy);
+    if (n.modifiedBy) knownUsers.add(n.modifiedBy);
+    if (n.usedBy)     knownUsers.add(n.usedBy);
+  });
+  // Derive PAW user list specifically from private folder owner nodes
+  var privateRoot  = TREE.find(function(n) { return n.id === 'f-private'; });
+  var pawUserNames = new Set((privateRoot ? privateRoot.children || [] : [])
+    .map(function(n) { return n.owner; }).filter(Boolean));
+
+  function daysSince(iso) {
+    if (!iso) return null;
+    return Math.floor((now - new Date(iso)) / 86400000);
+  }
+
+  var stale90 = books.filter(function(b) {
+    var d = daysSince(b.usedDate); return d === null || d > 90;
+  });
+  var stale60 = books.filter(function(b) {
+    var d = daysSince(b.usedDate); return d === null || d > 60;
+  }).map(function(b) {
+    return Object.assign({}, b, { staleDays: daysSince(b.usedDate) });
+  }).sort(function(a, b) {
+    if (a.staleDays === null && b.staleDays === null) return 0;
+    if (a.staleDays === null) return -1;
+    if (b.staleDays === null) return 1;
+    return b.staleDays - a.staleDays;
+  });
+
+  // Orphaned: shared books whose creator is NOT a known PAW user (private folder owner).
+  // Indicates the creator may no longer have a PAW account.
+  var orphaned = books.filter(function(b) {
+    if (b.private) return false; // private books always have a known owner
+    var creator = b.createdBy || '';
+    return creator && !pawUserNames.has(creator);
+  });
+
+  var recent7 = books.filter(function(b) {
+    var d = daysSince(b.modifiedDate); return d !== null && d <= 7;
+  }).sort(function(a, b) { return new Date(b.modifiedDate) - new Date(a.modifiedDate); });
+
+  return {
+    totalBooks:    books.length,
+    privateBooks:  books.filter(function(b) { return b.private; }).length,
+    stale90Count:  stale90.length,
+    orphanedCount: orphaned.length,
+    stale60:       stale60,
+    orphaned:      orphaned,
+    recent7:       recent7,
+  };
+}
+
+function dashLocation(node) {
+  var parts = (node.path || '').split('/').filter(Boolean);
+  parts.pop(); // drop the asset name itself
+  return parts.join(' › ') || '—';
+}
+
+function renderDashboard() {
+  var d  = buildDashData();
+  var el = document.getElementById('dashboard-wrap');
+
+  // ── Stat cards ──────────────────────────────────────────────────────────────
+  var html = '<div class="dash-cards">'
+    + '<div class="dash-card"><div class="dash-card-val" style="color:var(--blue)">'   + d.totalBooks    + '</div><div class="dash-card-lbl">Total books</div></div>'
+    + '<div class="dash-card"><div class="dash-card-val" style="color:var(--coral)">'  + d.stale90Count  + '</div><div class="dash-card-lbl">Stale 90+ days</div></div>'
+    + '<div class="dash-card"><div class="dash-card-val" style="color:var(--amber)">'  + d.privateBooks  + '</div><div class="dash-card-lbl">Private books</div></div>'
+    + '<div class="dash-card"><div class="dash-card-val" style="color:var(--muted)">'  + d.orphanedCount + '</div><div class="dash-card-lbl">Orphaned books</div></div>'
+    + '</div>';
+
+  // ── Stale books (60+ days) ───────────────────────────────────────────────────
+  html += '<div class="dash-section"><div class="dash-section-title">Stale books'
+    + ' · not opened in 60+ days <span class="dash-section-count">' + d.stale60.length + '</span></div>';
+  if (d.stale60.length) {
+    html += '<table class="dash-table"><thead><tr>'
+      + '<th>Book</th><th>Location</th><th>Owner / Created by</th><th>Last opened</th><th>Last opened by</th><th></th>'
+      + '</tr></thead><tbody>';
+    d.stale60.forEach(function(b) {
+      var staleCell = b.staleDays === null
+        ? '<span class="dash-never-badge">Never opened</span>'
+        : '<span class="dash-stale-badge">' + b.staleDays + 'd ago</span>';
+      var pawUrl = pawBookUrl(b.id);
+      html += '<tr>'
+        + '<td><span class="dash-book-name">' + (b.private ? '🔒 ' : '') + b.name + '</span></td>'
+        + '<td style="color:var(--muted);font-size:11px">' + dashLocation(b) + '</td>'
+        + '<td>' + (b.owner || b.createdBy || '—') + '</td>'
+        + '<td>' + staleCell + '</td>'
+        + '<td style="color:var(--muted)">' + (b.usedBy || '—') + '</td>'
+        + '<td>' + (pawUrl ? '<a href="' + pawUrl + '" target="_blank" rel="noopener" style="font-size:10px;color:var(--blue);white-space:nowrap;text-decoration:none">Open ↗</a>' : '') + '</td>'
+        + '</tr>';
+    });
+    html += '</tbody></table>';
+  } else {
+    html += '<div class="dash-empty">All books have been opened within the last 60 days.</div>';
+  }
+  html += '</div>';
+
+  // ── Orphaned books ──────────────────────────────────────────────────────────
+  html += '<div class="dash-section"><div class="dash-section-title">Orphaned books'
+    + ' · creator not a current PAW user <span class="dash-section-count">' + d.orphaned.length + '</span></div>';
+  if (d.orphaned.length) {
+    html += '<table class="dash-table"><thead><tr>'
+      + '<th>Book</th><th>Location</th><th>Created by</th><th>Created</th><th>Last modified</th><th></th>'
+      + '</tr></thead><tbody>';
+    d.orphaned.forEach(function(b) {
+      var pawUrl = pawBookUrl(b.id);
+      html += '<tr>'
+        + '<td><span class="dash-book-name">' + b.name + '</span></td>'
+        + '<td style="color:var(--muted);font-size:11px">' + dashLocation(b) + '</td>'
+        + '<td style="color:var(--coral)">' + (b.createdBy || '—') + '</td>'
+        + '<td style="color:var(--muted)">' + (b.createdDate ? new Date(b.createdDate).toLocaleDateString() : '—') + '</td>'
+        + '<td style="color:var(--muted)">' + relTime(b.modifiedDate) + '</td>'
+        + '<td>' + (pawUrl ? '<a href="' + pawUrl + '" target="_blank" rel="noopener" style="font-size:10px;color:var(--blue);white-space:nowrap;text-decoration:none">Open ↗</a>' : '') + '</td>'
+        + '</tr>';
+    });
+    html += '</tbody></table>';
+  } else {
+    html += '<div class="dash-empty">No orphaned books — all creators are current PAW users.</div>';
+  }
+  html += '</div>';
+
+  // ── Recently modified (last 7 days) ─────────────────────────────────────────
+  html += '<div class="dash-section"><div class="dash-section-title">Recently modified'
+    + ' · last 7 days <span class="dash-section-count">' + d.recent7.length + '</span></div>';
+  if (d.recent7.length) {
+    html += '<table class="dash-table"><thead><tr>'
+      + '<th>Book</th><th>Location</th><th>Modified by</th><th>Modified</th><th></th>'
+      + '</tr></thead><tbody>';
+    d.recent7.forEach(function(b) {
+      var pawUrl = pawBookUrl(b.id);
+      html += '<tr>'
+        + '<td><span class="dash-book-name">' + (b.private ? '🔒 ' : '') + b.name + '</span></td>'
+        + '<td style="color:var(--muted);font-size:11px">' + dashLocation(b) + '</td>'
+        + '<td>' + (b.modifiedBy || '—') + '</td>'
+        + '<td style="color:var(--teal)">' + relTime(b.modifiedDate) + '</td>'
+        + '<td>' + (pawUrl ? '<a href="' + pawUrl + '" target="_blank" rel="noopener" style="font-size:10px;color:var(--blue);white-space:nowrap;text-decoration:none">Open ↗</a>' : '') + '</td>'
+        + '</tr>';
+    });
+    html += '</tbody></table>';
+  } else {
+    html += '<div class="dash-empty">No books modified in the last 7 days.</div>';
+  }
+  html += '</div>';
+
+  el.innerHTML = html;
+}
+</script>
+</body>
+</html>

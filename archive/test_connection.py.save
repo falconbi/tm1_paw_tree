@@ -1,0 +1,16 @@
+XXfrom TM1py import TM1Service
+
+with TM1Service(
+    address='192.168.1.178',
+    port=4444,
+    ssl=False,
+    instance='tm1-i-d5um3t8b7bfhj31fv32g-d-d62hka0b7bfh0d4scmfg',
+    application_client_id='MyW60BboDxnSpuGznmbhm9hoRLmyXxOX',
+    application_client_secret='bMA72KI8V0XZRqs8fpnXgLEeA5CawLNtwA4KcjKw4ENujkk51cs4lqC4Yb9pVC4N') as tm1:
+
+    version = tm1.server.get_product_version()
+    cubes = tm1.cubes.get_all_names()
+    print(f"Connected! Version: {version}")
+    print(f"Cubes found: {len(cubes)}")
+    for cube in cubes:
+        print(f"  {cube}")

@@ -1,0 +1,13 @@
+.env
+venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+.git/
+.vscode/
+.idea/
+*.swp
+cube_map/tm1_model.json
+cube_map/layouts/*.json
+*.pem

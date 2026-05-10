@@ -1,0 +1,42 @@
+import requests
+from TM1py import TM1Service
+
+# Step 1: Get TM1SessionId cookie via custom auth
+auth = requests.post(
+    'http://192.168.1.178:4444/tm1/auth/v1/session',
+    auth=(
+        'N10fSjnjkzYSNJl4djGSBL2OpLbalyXX',
+        'VgkxMKlitfPg3K4b4kERoK0SVNjdA2UzdW6Ig1OlNE2bcho8l0mytOTWh2SJVmvH'
+    ),
+    headers={'Content-Type': 'application/json'},
+    json={'User': 'akadmin'}
+)
+
+token = auth.cookies.get('TM1SessionId')
+print(f"Auth status : {auth.status_code}")
+print(f"Token       : {token[:40]}..." if token else "Token       : NOT FOUND — check credentials")
+
+if not token:
+    exit(1)
+
+# Step 2: Connect via TM1py using session_id (sets TM1SessionId cookie correctly)
+params = {
+    'base_url': 'http://192.168.1.178:4444/tm1/api/v1',
+    'session_id': token,   # session_id → BASIC auth mode → TM1SessionId cookie ✅
+    'ssl': False,
+    'verify': False,
+}
+
+with TM1Service(**params) as tm1:
+    print("\nTM1py connected ✅")
+    print(f"Server version : {tm1.server.get_product_version()}")
+    
+    dims = tm1.dimensions.get_all_names()
+    print(f"Dimensions     : {len(dims)} found")
+    for d in dims[:10]:
+        print(f"  {d}")
+
+    cubes = tm1.cubes.get_all_names()
+    print(f"\nCubes          : {len(cubes)} found")
+    for c in cubes[:10]:
+        print(f"  {c}")

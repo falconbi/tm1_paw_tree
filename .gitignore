@@ -1,0 +1,33 @@
+# Environment
+.env
+venv/
+env/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# Generated model cache — re-extracted from TM1 on Refresh
+cube_map/tm1_model.json
+
+# User-specific saved layouts
+cube_map/layouts/*.json
+
+# SSL certs (mkcert local dev)
+*.pem
+
+# Report builder — data at rest (financial data, never commit)
+report_builder/data.db
+report_builder/data.db-wal
+report_builder/data.db-shm
+report_builder/snapshots/
+report_builder/datasets/
+report_builder/csv/
+report_builder/pack_snapshots/

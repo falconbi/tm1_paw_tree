@@ -1,0 +1,87 @@
+Here's a full summary of everything we built and learned:
+
+Converting Bedrock .pro Files to TM1 Server 12
+Why It's Needed
+TM1 Server 12 (Planning Analytics Engine) removed the ability to copy .pro files directly into the server data directory. The only way to load TurboIntegrator processes is now via the REST API, which requires JSON format.
+
+The .pro File Format
+The .pro file is a flat key-value format using fixed numeric field codes:
+CodeField602Process name560Parameter count561Parameter types (1=Numeric, 2=String)590Parameter default values637Parameter prompts572Prolog code573Metadata code574Data code575Epilog code564Datasource type
+These codes are fixed across all TM1 versions — they never change.
+
+The Three Scripts
+pro_to_json.py — Converts .pro to JSON
+
+Parses all field codes from the .pro file
+Extracts all four code sections (Prolog, Metadata, Data, Epilog)
+Builds the correct JSON structure for the REST API
+Automatically runs the linter on each JSON after writing
+Deletes old JSON before writing to prevent stale file issues
+Handles Windows \r\n line endings
+
+bash# Single file
+python3 pro_to_json.py --file "pro_files/}bedrock.cube.data.clear.pro" --out_folder json_files
+
+# Entire folder
+python3 pro_to_json.py --src_folder pro_files --out_folder json_files
+
+ti_lint.py — Lints and fixes TI code
+Runs automatically inside pro_to_json.py. Fixes:
+
+Control keywords → ALL CAPS (IF, WHILE, ENDIF, ELSE)
+Function names → canonical case (CubeExists, ViewZeroOut, SubSt, TRIM)
+Lower() → LOWER() (correct TI function name)
+@<> and @= operator spacing preserved correctly
+Operator spacing normalised (=, <>, >= etc.)
+Semicolons added where missing, removed where spuriously added before );
+Deprecated v12 functions commented out with a warning:
+
+CubeSetLogChanges — removed, logging now server-controlled
+CubeGetLogChanges — removed
+ExecuteCommand — removed, use ExecuteHttpRequest instead
+CubeSaveData, SaveDataAll, LockOn, LockOff, BatchUpdateStart/Finish
+
+
+
+bash# Can also run standalone on existing JSON files
+python3 ti_lint.py --json_folder json_files
+
+json_to_tm1.py — Imports JSON to TM1 Server 12
+
+Connects using tm1_connect.py (cookie-based auth via TM1SessionId)
+Auto-detects POST (new process) vs PATCH (existing process)
+Logs result per file with HTTP status code
+Continues on errors so one bad file doesn't stop the batch
+
+bash# Single file
+python3 json_to_tm1.py --file "json_files/}bedrock.cube.data.clear.json"
+
+# Entire folder
+python3 json_to_tm1.py --json_folder json_files
+
+Full Workflow
+bashpython3 pro_to_json.py --src_folder pro_files --out_folder json_files
+python3 json_to_tm1.py --json_folder json_files
+```
+
+---
+
+### Key TM1 v12 Breaking Changes Discovered
+| Function | Status | Notes |
+|----------|--------|-------|
+| `CubeSetLogChanges` | ❌ Removed | Logging now server-controlled |
+| `CubeGetLogChanges` | ❌ Removed | As above |
+| `ExecuteCommand` | ❌ Removed | No OS access in containers — use `ExecuteHttpRequest` |
+| `CubeSaveData` / `SaveDataAll` | ❌ Removed | |
+| `LockOn` / `LockOff` | ❌ Removed | |
+| `LOWER()` | ✅ Valid TI function | `LOWCASE()` is Rules only |
+| `@<>` operator | ✅ Valid | Must stay as single token, no space |
+| REST API endpoint | ✅ Required | `POST /Processes` to create, `PATCH /Processes('name')` to update |
+
+---
+
+### Connection Details
+Your server uses cookie-based auth — not basic auth:
+```
+POST http://192.168.1.178:4444/tm1/auth/v1/session
+Base URL: http://192.168.1.178:4444/tm1/api/v1/Databases('TM1 Governance') Sonnet 4.6Claude is AI and can make mistakes. Please double-check responses.

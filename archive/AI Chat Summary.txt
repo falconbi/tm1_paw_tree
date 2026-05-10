@@ -1,0 +1,232 @@
+Yes good idea — this conversation is very long now which is slowing things down.
+Before you start a new chat, save these key facts to refer back to:
+TM1 Connection:
+├── Address:     192.168.1.178:4444
+├── Auth URL:    http://192.168.1.178:4444/tm1/auth/v1/session
+├── Client ID:   N10fSjnjkzYSNJl4djGSBL2OpLbalyXX
+├── User:        akadmin
+├── Database:    TM1 Governance
+└── Working connection in: ~/tm1-governance/tm1_connect.py
+
+Where we are with TM1py:
+├── Token retrieval works ✅
+├── TM1py sends Bearer header ❌
+├── TM1 expects TM1SessionId cookie
+└── Next step: inject cookie into TM1py session
+
+Project files:
+├── ~/tm1-governance/tm1_connect.py     ← working REST connection
+├── ~/tm1-governance/test_tm1py.py      ← TM1py test in progress
+└── /mnt/user-data/outputs/             ← all scripts and docs
+Start a new chat and paste this summary so we can pick up exactly where we left off. 🎯I will delete this chat can you summerise all from it please10:52 AMHere's a comprehensive summary of everything we covered:
+
+Project: TM1 Governance Suite
+Vision
+Build a TM1/Planning Analytics governance, documentation and AI tool — targeting the gap between technical TM1 developers and business managers who oversee TM1 but can't interrogate it. Unique advantage: TM1 V12 on-prem access before almost anyone else globally.
+Your Setup
+Physical Rig:        Ubuntu 24.04 (dual boot) — 32GB RAM
+Ubuntu Host:         192.168.1.171 — runs Authentik (Docker), development work
+Windows VM:          192.168.1.178 — runs TM1 V12 Server on port 4444
+RHEL VM:             192.168.1.223 — runs PAW (12GB RAM)
+Authentik:           Port 9000 — OIDC identity provider
+TM1 V12 Authentication (Critical Discovery)
+Auth endpoint:   POST http://192.168.1.178:4444/tm1/auth/v1/session
+Auth method:     HTTP Basic (client ID + secret)
+Request body:    {"User": "akadmin"}
+Response:        TM1SessionId cookie (JWT)
+Client ID:       N10fSjnjkzYSNJl4djGSBL2OpLbalyXX
+Client Secret:   VgkxMKlitfPg3K4b4kERoK0SVNjdA2UzdW6Ig1OlNE2bcho8l0mytOTWh2SJVmvH
+Database:        TM1 Governance
+User:            akadmin
+Working Python Connection
+python# ~/tm1-governance/tm1_connect.py
+import requests
+
+TM1_CONFIG = {
+    'address':       '192.168.1.178',
+    'port':          4444,
+    'database':      'TM1 Governance',
+    'client_id':     'N10fSjnjkzYSNJl4djGSBL2OpLbalyXX',
+    'client_secret': 'VgkxMKlitfPg3K4b4kERoK0SVNjdA2UzdW6Ig1OlNE2bcho8l0mytOTWh2SJVmvH',
+    'user':          'akadmin',
+}
+
+def get_session():
+    cfg = TM1_CONFIG
+    base = f"http://{cfg['address']}:{cfg['port']}/tm1"
+    auth = requests.post(
+        f"{base}/auth/v1/session",
+        auth=(cfg['client_id'], cfg['client_secret']),
+        headers={'Content-Type': 'application/json'},
+        json={'User': cfg['user']}
+    )
+    token = auth.cookies.get('TM1SessionId')
+    session = requests.Session()
+    session.cookies.set('TM1SessionId', token)
+    session.headers.update({'Content-Type': 'application/json'})
+    session.base_url = f"{base}/api/v1/Databases('{cfg['database']}')"
+    return session
+```
+
+### TM1py Status
+```
+✅ Token retrieval works
+✅ base_url = http://192.168.1.178:4444/tm1/api/v1
+✅ access_token mode triggered correctly
+❌ TM1py sends Bearer header — TM1 expects TM1SessionId cookie
+Next step: inject cookie into TM1py internal session after init:
+    tm1._tm1_rest._s.cookies.set('TM1SessionId', token)
+    tm1._tm1_rest._s.headers.pop('Authorization', None)
+```
+
+### Tech Stack Decided
+```
+CubeMap diagram:     HTML + Cytoscape.js + Dagre (built ✅)
+Governance dashboard: Streamlit
+TM1 connection:      TM1py (for automation) + raw REST (working)
+AI:                  DeepSeek API
+Agent:               OpenClaw
+Messaging:           Telegram
+```
+
+### Product: TM1 Governance Suite — Six Pillars
+```
+1. Data Lineage          — cube→rule→report trail
+2. Data Quality          — record counts, rejections, anomalies
+3. Security Controls     — group memberships, access anomalies
+4. Reconciliation Engine — source vs TM1 variance tracking
+5. Governance Rules      — 24/7 agent monitoring
+6. Control Reporting     — unified dashboard with AI narrative
+```
+
+### CubeMap Visualiser (Built ✅)
+```
+File: /mnt/user-data/outputs/tm1-cube-map.html
+Tech: Cytoscape.js 3.28.1 + Dagre layout
+Features:
+├── 14 sample cubes with relationships
+├── Left→right Dagre layout
+├── Click cube → rich info panel
+├── Rules analysis with complexity scoring
+├── Dimension colour coding
+├── Search and highlight
+├── 4 layout modes
+├── Depth selector
+└── Description trust badges
+```
+
+### Naming Convention Standard (Document created ✅)
+```
+File: TM1 Naming Convention Standard.docx
+Rules:
+├── White space for readability — no underscores
+├── 3-letter module prefix (CPX, SAL, FIN, HRC, CST, GBL)
+├── GBL prefix for shared global dimensions
+├── Full words — no abbreviations
+├── Measure dimension named after its cube
+├── TI: DATA IMPORT, DATA EXPORT, CALC, UPDATE, META DATA
+├── Views: RPT prefix (user), SYS prefix (system)
+└── Accounts: Code as element, Code & Desc and Desc as aliases
+```
+
+### Healthcare ABC Model Design (Document created ✅)
+```
+File: TM1 Healthcare ABC Model Design.docx
+Module prefix: CST
+8 Service Lines: Emergency, Elective Surgery, ICU, Outpatient,
+                 Radiology, Pathology, Maternity, Allied Health
+9 Cost Pools:    Facility, Clinical Engineering, IT, HR,
+                 Finance, Sterilisation, Transport, Catering, Executive
+11 Activities:   Patient Admission, Surgical Preparation, Clinical
+                 Procedure, Patient Monitoring, Diagnostic Ordering,
+                 Diagnostic Reporting, Medication Management, Theatre
+                 Scheduling, Discharge Planning, Outpatient Coordination,
+                 Infection Prevention
+8 Cubes:         CST GL Input, CST Pool Driver, CST Activity Driver,
+                 CST Cost Pool Allocation, CST Activity Allocation,
+                 CST Service Line Cost, CST Profit and Loss Report,
+                 CST Allocation Reconciliation
+```
+
+### Dimensions Built/In Progress
+```
+GBL Period     ✅ Built in PAW via TI (complex — MTD, YTG, OBL, attributes)
+GBL Version    ✅ Script ready (Budget, Forecast, Actual)
+GBL Account    ✅ Script ready (4000-7000 codes, Code & Desc / Desc aliases)
+GBL Department ⏳ Next
+CST Cost Pool  ⏳ Ready to build
+CST Activity   ⏳ Ready to build
+CST Service Line ⏳ Ready to build
+CST Reconciliation Check ⏳ Ready to build
+```
+
+### GBL Period Structure (TI Script created ✅)
+```
+All Periods
+├── All FY
+│   └── All FY22 - All FY27
+│       ├── FYxx MTD (OBL + months cumulative)
+│       ├── FYxx YTG (remaining months incl current)
+│       └── FYxx (OBL + 12 leaf months)
+├── All CY
+│   └── CY2021 - CY2027
+└── All System
+    └── All OBL (FY22 OBL - FY27 OBL)
+
+Attributes:
+├── Code & Desc, Desc (aliases)
+├── Prior Period, Next Period
+├── FY, FY Month Number
+├── Date Serial SOM, Date Serial EOM
+├── Days in Month
+├── Is Open, Is Current
+
+FY start: April — FY26 = Apr 2025 → Mar 2026
+Elements: 202101 → 202703
+```
+
+### Key TI Function Syntax (from IBM reference)
+```
+DimensionCreate(DimName)
+DimensionDeleteAllElements(DimName)
+DimensionElementInsert(DimName, InsertionPoint, ElName, ElType)
+DimensionElementComponentAdd(DimName, ConsolEl, ChildEl, Weight)
+AttrInsert(DimName, PrevAttr, AttrName, Type)  ← Type: A/S/N
+AttrPutS(Value, DimName, ElName, AttrName)     ← Value first!
+AttrPutN(Value, DimName, ElName, AttrName)     ← Value first!
+No DateSerial in TM1 — use leap year logic instead
+No inline comments — # must be on own line
+```
+
+### Scripts Created
+```
+~/tm1-governance/tm1_connect.py         ← working REST connection
+~/tm1-governance/test_tm1py.py          ← TM1py connection test
+~/tm1-governance/create_gbl_version.py  ← GBL Version via REST API
+~/tm1-governance/create_gbl_account.py  ← GBL Account via REST API
+META DATA GBL Period.ti                 ← TI script for Period dim
+```
+
+### Key Insights
+```
+✅ TM1py best for automation and orchestration
+✅ TI best for complex dim builds and data loading
+✅ Use TM1py to execute TI processes
+✅ Architecture score from Dagre = model quality indicator
+✅ ABC models highest value use case for governance tool
+✅ Mapping layer needed for client naming conventions
+✅ Onboarding wizard to handle any naming convention
+✅ 25 years domain knowledge = key competitive advantage
+```
+
+### Pending / Next Steps
+```
+1. Fix TM1py cookie injection (test_tm1py.py)
+2. Build remaining dimensions
+3. Build cubes
+4. Build TI processes for ABC model
+5. Connect CubeMap to real V12 data
+6. Build Streamlit governance dashboard
+7. Upload CV for freelance strategy review
+
+Good luck with the new chat — you've built something genuinely impressive today. 🚀

@@ -1,0 +1,32 @@
+{
+  "_comment": "PAW Group Security Configuration — TM1 Governance Suite",
+  "_version": "1.0",
+  "_updated": "2026-03-17",
+  "_instructions": "Add groups here to enable role-based filtering in the Workbook Tree. folder_permissions keys must match PAW content paths exactly.",
+
+  "groups": [
+    {
+      "id": "grp-admin",
+      "name": "Admin",
+      "description": "Full administrative access — all folders, all books, TM1 server admin.",
+      "colour": "#388bfd",
+      "tm1_access": "Admin",
+      "folder_permissions": {
+        "/shared":                    ["list", "open", "write", "manage", "secure"],
+        "/shared/Admin":              ["list", "open", "write", "manage", "secure"],
+        "/shared/Costing Allocation": ["list", "open", "write", "manage", "secure"]
+      }
+    },
+    {
+      "id": "grp-cst",
+      "name": "CST",
+      "description": "Costing team — access to Costing Allocation folder. Read access to shared root. No access to Admin folder.",
+      "colour": "#3fb950",
+      "tm1_access": "Write",
+      "folder_permissions": {
+        "/shared":                    ["list"],
+        "/shared/Costing Allocation": ["list", "open", "write"]
+      }
+    }
+  ]
+}

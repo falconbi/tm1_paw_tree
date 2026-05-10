@@ -1,0 +1,61 @@
+{
+  "cubeTags": {
+    "CST Account Config": [
+      "CST"
+    ],
+    "CST Account to Pool Apportionment": [
+      "CST"
+    ],
+    "CST Activity Config": [
+      "CST"
+    ],
+    "CST Activity to Activity Config": [
+      "CST"
+    ],
+    "CST Activity to Service Line Apportionment": [
+      "CST"
+    ],
+    "CST Apportionment Reconciliation": [
+      "CST"
+    ],
+    "CST ETL Control": [
+      "CST"
+    ],
+    "CST Load Drivers": [
+      "CST"
+    ],
+    "CST Load GL": [
+      "CST"
+    ],
+    "CST Pool Config": [
+      "CST"
+    ],
+    "CST Pool to Activity Apportionment": [
+      "CST"
+    ],
+    "CST Pool to Pool Config": [
+      "CST"
+    ],
+    "CST Profit and Loss Report": [
+      "CST"
+    ],
+    "CST Run Apportionment": [
+      "CST"
+    ],
+    "ETL \u2014 Load Drivers": [
+      "CST"
+    ],
+    "ETL \u2014 Load GL": [
+      "CST"
+    ],
+    "ETL \u2014 Poller": [
+      "CST"
+    ],
+    "ETL \u2014 Run Apportionment": [
+      "CST"
+    ]
+  },
+  "tagDefs": {
+    "CST": "#1f6feb"
+  }
+}

@@ -1,0 +1,12 @@
+services:
+  tm1-governance:
+    build: .
+    ports:
+      - "8082:8082"
+    env_file: .env
+    volumes:
+      - tm1_data:/app/cube_map/layouts
+    restart: unless-stopped
+
+volumes:
+  tm1_data:

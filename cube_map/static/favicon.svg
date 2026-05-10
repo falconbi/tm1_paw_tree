@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <!-- Left cube (simplified front face + top + right side) -->
+  <rect x="2" y="12" width="10" height="10" rx="1" stroke="#2563eb" stroke-width="2"/>
+  <polyline points="2,12 6,8 16,8 16,18 12,22" stroke="#2563eb" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="12" y1="12" x2="16" y2="8" stroke="#2563eb" stroke-width="2" stroke-linecap="round"/>
+  <!-- Arrow -->
+  <line x1="16" y1="17" x2="20" y2="17" stroke="#2563eb" stroke-width="2" stroke-linecap="round"/>
+  <polyline points="18,14 21,17 18,20" stroke="#2563eb" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+  <!-- Right cube -->
+  <rect x="21" y="12" width="9" height="10" rx="1" stroke="#2563eb" stroke-width="2"/>
+  <polyline points="21,12 24,9 30,9 30,19" stroke="#2563eb" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="30" y1="12" x2="30" y2="9" stroke="#2563eb" stroke-width="2" stroke-linecap="round"/>
+</svg>
