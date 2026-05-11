@@ -103,7 +103,12 @@ def paw_get(session: requests.Session, path: str, **kwargs) -> dict:
     cfg = PAW_CONFIG
     url = f"{cfg['paw_host']}/pacontent/v1/{path}"
     csrf = session.cookies.get('ba-sso-csrf', '')
-    r = session.get(url, headers={'ba-sso-authenticity': csrf}, **kwargs)
+    headers = {
+        'ba-sso-authenticity': csrf,
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache',
+    }
+    r = session.get(url, headers=headers, **kwargs)
     r.raise_for_status()
     return r.json()
 

@@ -14,6 +14,11 @@ __pycache__/
 .idea/
 *.swp
 
+# Activity SQLite DB — runtime data, not source
+activity/*.db
+activity/*.db-wal
+activity/*.db-shm
+
 # Generated model cache — re-extracted from TM1 on Refresh
 cube_map/tm1_model.json
 
