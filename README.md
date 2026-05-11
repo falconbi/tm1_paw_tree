@@ -67,12 +67,6 @@ python3 app.py
 
 Open **http://localhost:8082**
 
-### Docker
-
-```bash
-docker compose up --build
-```
-
 ---
 
 ## Configuration Reference
