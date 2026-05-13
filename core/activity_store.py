@@ -223,6 +223,72 @@ def get_stats(days=90):
     }
 
 
+def process_log_entries(entries, book_cache):
+    """
+    Record activity from wa-proxy log entries.
+    entries:    list of (iso_timestamp_str, book_id, login_id)
+    book_cache: dict of book_id → {name, path, private, owner}
+    Deduplicates: same (user, book) within 60 s = single hit (browser double-fetch).
+    Returns (new_sessions, new_hits).
+    """
+    new_sessions = 0
+    new_hits = 0
+    seen = {}  # (login_id, book_id) → last datetime
+
+    with _conn() as conn:
+        for ts_str, book_id, login_id in entries:
+            try:
+                ts = datetime.fromisoformat(ts_str.replace('Z', '+00:00'))
+            except ValueError:
+                continue
+
+            key = (login_id, book_id)
+            if key in seen and (ts - seen[key]).total_seconds() < 60:
+                continue
+            seen[key] = ts
+
+            ts_iso = ts.isoformat()
+            cutoff = (ts - timedelta(hours=SESSION_GAP_HOURS)).isoformat()
+
+            session_row = conn.execute('''
+                SELECT id FROM sessions
+                WHERE user = ? AND last_seen >= ?
+                ORDER BY last_seen DESC LIMIT 1
+            ''', (login_id, cutoff)).fetchone()
+
+            if session_row:
+                session_id = session_row['id']
+                conn.execute('''
+                    UPDATE sessions SET last_seen = ?, book_count = book_count + 1 WHERE id = ?
+                ''', (ts_iso, session_id))
+            else:
+                session_id = str(uuid.uuid4())
+                conn.execute('''
+                    INSERT INTO sessions (id, user, started_at, last_seen, book_count)
+                    VALUES (?, ?, ?, ?, 1)
+                ''', (session_id, login_id, ts_iso, ts_iso))
+                new_sessions += 1
+
+            book = book_cache.get(book_id, {})
+            conn.execute('''
+                INSERT INTO hits
+                    (session_id, book_id, book_name, book_path, used_date, captured_at, private, owner)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (
+                session_id, book_id,
+                book.get('name', book_id),
+                book.get('path', ''),
+                ts_iso, ts_iso,
+                1 if book.get('private') else 0,
+                book.get('owner', ''),
+            ))
+            new_hits += 1
+
+        conn.commit()
+
+    return new_sessions, new_hits
+
+
 def purge_old(days=90):
     cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
     with _conn() as conn:

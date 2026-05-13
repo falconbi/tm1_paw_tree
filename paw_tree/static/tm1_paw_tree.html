@@ -213,6 +213,8 @@ body { display: flex; flex-direction: column; }
 .act-sep { width: 1px; height: 20px; background: var(--border); }
 .act-select-wrap { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); }
 .act-select-wrap select { background: var(--faint); border: 1px solid var(--border); color: var(--text); font-size: 11px; padding: 2px 6px; border-radius: 4px; font-family: var(--font-ui); outline: none; cursor: pointer; }
+.act-mode-chip { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 10px; background: var(--faint); border: 1px solid var(--border); color: var(--muted); cursor: default; letter-spacing: .03em; text-transform: uppercase; }
+.act-mode-chip.log { background: color-mix(in srgb, var(--teal) 12%, transparent); border-color: var(--teal); color: var(--teal); }
 .act-status { font-size: 11px; color: var(--muted); margin-left: auto; }
 .act-status.on { color: var(--teal); }
 .act-poll-btn { font-size: 11px; padding: 3px 10px; border-radius: 5px; border: 1px solid var(--border); background: var(--faint); color: var(--text2); cursor: pointer; font-family: var(--font-ui); }
@@ -1269,12 +1271,16 @@ function renderActivity() {
 }
 
 function _buildActivityHTML(cfg, stats) {
-  var running  = cfg.running;
-  var lastPoll = cfg.lastPoll && cfg.lastPoll.time
-    ? 'Last poll: ' + relTime(cfg.lastPoll.time)
+  var running   = cfg.running;
+  var isLogMode = cfg.activityMode === 'log';
+  var modeLabel = isLogMode ? 'Log mode' : 'Poll mode';
+  var modeTitle = isLogMode ? 'Reading wa-proxy log: ' + (cfg.logPath || '') : 'Polling PAW used_date';
+  var lastLabel = isLogMode ? 'Last read: ' : 'Last poll: ';
+  var lastPoll  = cfg.lastPoll && cfg.lastPoll.time
+    ? lastLabel + relTime(cfg.lastPoll.time)
       + ' · ' + (cfg.lastPoll.sessions || 0) + ' new sessions'
       + ' · ' + (cfg.lastPoll.hits || 0) + ' book opens'
-    : 'Not yet polled';
+    : 'Not yet run';
 
   // Config bar
   var html = '<div class="act-config-bar">'
@@ -1284,7 +1290,9 @@ function _buildActivityHTML(cfg, stats) {
     + '  <span style="font-size:11px;color:var(--muted)">' + (cfg.enabled ? 'On' : 'Off') + '</span>'
     + '</div>'
     + '<div class="act-sep"></div>'
-    + '<div class="act-select-wrap">Poll every'
+    + '<span class="act-mode-chip' + (isLogMode ? ' log' : '') + '" title="' + modeTitle + '">' + modeLabel + '</span>'
+    + '<div class="act-sep"></div>'
+    + '<div class="act-select-wrap">' + (isLogMode ? 'Check every' : 'Poll every')
     + '  <select id="act-interval" onchange="saveActivityConfig()" ' + (!cfg.enabled ? 'disabled' : '') + '>'
     + [5,15,30,60].map(function(m) {
         return '<option value="' + m + '"' + (cfg.intervalMinutes == m ? ' selected' : '') + '>' + m + ' min</option>';
@@ -1300,15 +1308,17 @@ function _buildActivityHTML(cfg, stats) {
     + '</div>'
     + '<div class="act-sep"></div>'
     + '<button class="act-poll-btn" onclick="renderActivity()">Refresh</button>'
-    + '<button class="act-poll-btn" onclick="triggerPoll()">Poll now</button>'
+    + '<button class="act-poll-btn" onclick="triggerPoll()">' + (isLogMode ? 'Read now' : 'Poll now') + '</button>'
     + '<span class="act-status' + (running ? ' on' : '') + '">'
-    + (running ? '● Polling active · ' : '○ Polling off · ') + lastPoll
+    + (running ? '● Active · ' : '○ Off · ') + lastPoll
     + '</span></div>';
 
   if (!stats.totalSessions) {
     html += '<div style="padding:20px;font-size:12px;color:var(--muted)">'
       + (cfg.enabled
-          ? 'Tracking is on — data will appear here after the first poll captures some book opens.'
+          ? (isLogMode
+              ? 'Log mode is on — book opens will appear here as users open books in PAW.'
+              : 'Tracking is on — data will appear here after the first poll captures some book opens.')
           : 'Turn on activity tracking to start capturing PAW sessions and book opens.')
       + '</div>';
     return html;

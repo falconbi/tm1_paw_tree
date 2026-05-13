@@ -22,6 +22,7 @@ Endpoints:
 """
 
 import os
+import re
 import sys
 import json
 import logging
@@ -35,6 +36,9 @@ from flask_compress import Compress
 BASE_DIR = Path(__file__).parent
 
 sys.path.insert(0, str(BASE_DIR))
+
+from dotenv import load_dotenv
+load_dotenv(BASE_DIR / '.env')
 
 # ── Logging ───────────────────────────────────────────────────────────────────
 logging.basicConfig(
@@ -65,9 +69,21 @@ def add_cache_headers(response):
 ACTIVITY_CONFIG_FILE = BASE_DIR / 'activity' / 'activity_config.json'
 ACTIVITY_CONFIG_DEFAULTS = {'enabled': False, 'intervalMinutes': 15, 'retainDays': 90}
 
+# Log-based activity: wa-proxy log path from env (optional)
+PAW_LOG_PATH = os.environ.get('PAW_LOG_PATH', '').strip()
+LOG_POS_FILE = BASE_DIR / 'activity' / 'log_pos'
+
+# Matches browser book opens: Assets(id='uuid') with or without ?$expand=content
+# Excludes our own app requests which use Assets('uuid') without id=
+_WAPROXY_RE = re.compile(
+    r"^(\S+) - info: Proxy: \"GET http://pa-content:\d+/v1/Assets\(id='([0-9a-f-]{36})'\)"
+    r"(?:\?\$expand=content)?\" : 200 .+ \[([^\]]+)\]$"
+)
+
 _scheduler      = None
 _scheduler_lock = threading.Lock()
 _last_poll      = {'time': None, 'hits': 0, 'books': 0, 'error': None}
+_book_cache     = {}  # book_id → {name, path, private, owner}
 
 
 def _load_activity_config():
@@ -138,6 +154,76 @@ def _list_books_for_activity():
     return books
 
 
+def _read_log_pos():
+    try:
+        return int(LOG_POS_FILE.read_text().strip())
+    except Exception:
+        return None
+
+
+def _write_log_pos(pos):
+    LOG_POS_FILE.parent.mkdir(exist_ok=True)
+    LOG_POS_FILE.write_text(str(pos))
+
+
+def _parse_waproxy_lines(lines):
+    """Parse wa-proxy log lines and return [(iso_ts, book_id, login_id), ...]."""
+    entries = []
+    for line in lines:
+        m = _WAPROXY_RE.match(line.rstrip('\n'))
+        if m:
+            entries.append((m.group(1), m.group(2), m.group(3)))
+    return entries
+
+
+def _tail_activity_log():
+    """Read new lines from wa-proxy log, extract book opens, record to DB."""
+    global _last_poll
+    try:
+        from core.activity_store import process_log_entries, purge_old, init_db
+        init_db()
+
+        log_path = Path(PAW_LOG_PATH)
+        if not log_path.exists():
+            raise FileNotFoundError(f'PAW log not found: {PAW_LOG_PATH}')
+
+        file_size = log_path.stat().st_size
+        saved_pos = _read_log_pos()
+
+        if saved_pos is None:
+            # First run — seek to end, record position, no entries yet
+            _write_log_pos(file_size)
+            log.info(f'Activity log mode: seeded at byte {file_size}')
+            return
+
+        # Handle log rotation (file smaller than last position)
+        pos = 0 if file_size < saved_pos else saved_pos
+
+        with open(log_path, 'r', errors='replace') as f:
+            f.seek(pos)
+            new_lines = f.readlines()
+            new_pos   = f.tell()
+
+        entries = _parse_waproxy_lines(new_lines)
+        cfg = _load_activity_config()
+        new_sessions, new_hits = process_log_entries(entries, _book_cache)
+        purge_old(cfg.get('retainDays', 90))
+        _write_log_pos(new_pos)
+
+        _last_poll = {
+            'time':     datetime.now(timezone.utc).isoformat(),
+            'sessions': new_sessions,
+            'hits':     new_hits,
+            'books':    len(entries),
+            'error':    None,
+        }
+        if entries:
+            log.info(f'Activity log tail: {len(entries)} opens, {new_sessions} new sessions, {new_hits} new hits')
+    except Exception as e:
+        _last_poll['error'] = str(e)
+        log.error(f'Activity log tail failed: {e}')
+
+
 def _poll_activity():
     """List PAW books (no content expand), diff against snapshot, record sessions + hits."""
     global _last_poll
@@ -172,17 +258,26 @@ def _flatten_books(tree):
     return books
 
 
+def _activity_mode():
+    """Return 'log' if PAW_LOG_PATH is set and readable, else 'poll'."""
+    if PAW_LOG_PATH and Path(PAW_LOG_PATH).exists():
+        return 'log'
+    return 'poll'
+
+
 def _start_scheduler(interval_minutes):
     global _scheduler
     from apscheduler.schedulers.background import BackgroundScheduler
+    mode = _activity_mode()
+    job  = _tail_activity_log if mode == 'log' else _poll_activity
     with _scheduler_lock:
         if _scheduler and _scheduler.running:
             _scheduler.shutdown(wait=False)
         _scheduler = BackgroundScheduler()
-        _scheduler.add_job(_poll_activity, 'interval', minutes=interval_minutes,
+        _scheduler.add_job(job, 'interval', minutes=interval_minutes,
                            id='activity_poll', next_run_time=datetime.now())
         _scheduler.start()
-        log.info(f'Activity scheduler started — interval: {interval_minutes} min')
+        log.info(f'Activity scheduler started — mode: {mode}, interval: {interval_minutes} min')
 
 
 def _stop_scheduler():
@@ -359,10 +454,24 @@ def _build_paw_tree():
     return tree
 
 
+def _update_book_cache(nodes):
+    """Recursively populate _book_cache from tree nodes."""
+    for n in nodes:
+        if n.get('type') == 'book':
+            _book_cache[n['id']] = {
+                'name':    n.get('name', ''),
+                'path':    n.get('path', ''),
+                'private': n.get('private', False),
+                'owner':   n.get('owner', ''),
+            }
+        _update_book_cache(n.get('children', []))
+
+
 @app.route('/api/paw/tree')
 def api_paw_tree():
     try:
         tree = _build_paw_tree()
+        _update_book_cache(tree)
         log.info('PAW tree built successfully')
         return jsonify({'status': 'ok', 'tree': tree})
     except Exception as e:
@@ -389,8 +498,10 @@ def api_paw_book(book_id):
 @app.route('/api/paw/activity/config', methods=['GET'])
 def api_activity_config_get():
     cfg = _load_activity_config()
-    cfg['running'] = bool(_scheduler and _scheduler.running)
-    cfg['lastPoll'] = _last_poll
+    cfg['running']      = bool(_scheduler and _scheduler.running)
+    cfg['lastPoll']     = _last_poll
+    cfg['activityMode'] = _activity_mode()
+    cfg['logPath']      = PAW_LOG_PATH
     return jsonify(cfg)
 
 
