@@ -125,6 +125,15 @@ On first start, the activity store seeds a baseline snapshot without recording a
 
 ## Administration
 
+### Authentication Modes
+
+| Mode | PAW Version | How it works |
+|------|-------------|--------------|
+| `native` | V11 on-prem | Logs in directly with TM1 admin credentials via PAW's login form |
+| `authentik` | V12 on-prem | 6-step OAuth2 PKCE flow via Authentik identity provider |
+
+Set `PAW_AUTH_MODE` in `.env`. Most on-prem V11 installations use `native`.
+
 ### Startup
 
 ```bash

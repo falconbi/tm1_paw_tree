@@ -23,8 +23,7 @@ Gives administrators a single view of all PAW books — who created them, when t
 ## Requirements
 
 - Python 3.10+
-- IBM Planning Analytics Workspace (PAW) — on-prem
-- Authentik as the identity provider (OAuth2 PKCE)
+- IBM Planning Analytics Workspace (PAW) — on-prem V11 or V12
 
 ---
 
@@ -45,8 +44,22 @@ cp .env.example .env
 
 Edit `.env`:
 
+**PAW V11 (TM1 native auth — most on-prem installs):**
+
 ```env
 PAW_HOST=http://192.168.x.x
+PAW_AUTH_MODE=native
+PAW_USERNAME=admin
+PAW_PASSWORD=your_tm1_password
+PAW_ACCOUNT_ID=your_account_id
+PAW_TENANT_ID=your_tenant_id
+```
+
+**PAW V12 (Authentik OAuth2 PKCE):**
+
+```env
+PAW_HOST=http://192.168.x.x
+PAW_AUTH_MODE=authentik
 PAW_ACCOUNT_ID=your_account_id
 PAW_TENANT_ID=your_tenant_id
 
@@ -74,11 +87,14 @@ Open **http://localhost:8082**
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `PAW_HOST` | Yes | PAW server URL e.g. `http://192.168.1.100` |
+| `PAW_AUTH_MODE` | Yes | `native` for V11 TM1 login, `authentik` for V12 OAuth2 |
 | `PAW_ACCOUNT_ID` | Yes | PAW account ID (from browser URL) |
 | `PAW_TENANT_ID` | Yes | PAW tenant ID (from browser URL) |
-| `AUTHENTIK_HOST` | Yes | Authentik IdP URL e.g. `http://192.168.1.100:9000` |
-| `AUTHENTIK_USERNAME` | Yes | Admin account used for PAW API access |
-| `AUTHENTIK_PASSWORD` | Yes | Password for above account |
+| `PAW_USERNAME` | V11 only | TM1 admin username |
+| `PAW_PASSWORD` | V11 only | TM1 admin password |
+| `AUTHENTIK_HOST` | V12 only | Authentik IdP URL e.g. `http://192.168.1.100:9000` |
+| `AUTHENTIK_USERNAME` | V12 only | Admin account used for PAW API access |
+| `AUTHENTIK_PASSWORD` | V12 only | Password for above account |
 
 ---
 
