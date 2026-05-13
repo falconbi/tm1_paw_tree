@@ -10,11 +10,18 @@ load_dotenv(Path(__file__).parent.parent / '.env')
 # -----------------------------------------------------------------------
 # PAW Connection Configuration
 # -----------------------------------------------------------------------
+_auth_mode = os.environ.get('PAW_AUTH_MODE', 'authentik').lower()
+
 PAW_CONFIG = {
-    'paw_host':       os.environ['PAW_HOST'],
-    'authentik_host': os.environ['AUTHENTIK_HOST'],
-    'username':       os.environ['AUTHENTIK_USERNAME'],
-    'password':       os.environ['AUTHENTIK_PASSWORD'],
+    'paw_host':  os.environ['PAW_HOST'],
+    'auth_mode': _auth_mode,
+    # native (V11)
+    'username':       os.environ.get('PAW_USERNAME', ''),
+    'password':       os.environ.get('PAW_PASSWORD', ''),
+    # authentik (V12)
+    'authentik_host': os.environ.get('AUTHENTIK_HOST', ''),
+    'auth_username':  os.environ.get('AUTHENTIK_USERNAME', ''),
+    'auth_password':  os.environ.get('AUTHENTIK_PASSWORD', ''),
 }
 
 # -----------------------------------------------------------------------
@@ -39,8 +46,41 @@ PAW_CONFIG = {
 
 def get_paw_session() -> requests.Session:
     """
-    Perform the full Authentik OAuth2 PKCE login for PAW.
-    Returns an authenticated requests.Session ready to call PAW APIs.
+    Returns an authenticated requests.Session for PAW.
+    Dispatches to native (V11) or Authentik (V12) based on PAW_AUTH_MODE.
+    """
+    if PAW_CONFIG['auth_mode'] == 'native':
+        return _get_paw_session_native()
+    return _get_paw_session_authentik()
+
+
+def _get_paw_session_native() -> requests.Session:
+    """
+    V11 TM1 native auth — 2-step form POST.
+    Step 1: GET /login → paSession cookie
+    Step 2: POST /login/form/ → authenticated paSession + ba-sso-csrf
+    """
+    cfg = PAW_CONFIG
+    PAW = cfg['paw_host']
+
+    s = requests.Session()
+    s.get(f'{PAW}/login', allow_redirects=True)
+
+    r = s.post(
+        f'{PAW}/login/form/',
+        data={'username': cfg['username'], 'password': cfg['password'], 'mode': 'basic'},
+        headers={'ba-sso-authenticity': s.cookies.get('ba-sso-csrf', '')},
+    )
+
+    if not s.cookies.get('ba-sso-csrf'):
+        raise ConnectionError('PAW V11 login failed — ba-sso-csrf cookie not set')
+
+    return s
+
+
+def _get_paw_session_authentik() -> requests.Session:
+    """
+    V12 Authentik OAuth2 PKCE — 6-step flow.
     """
     cfg = PAW_CONFIG
     PAW = cfg['paw_host']
@@ -65,14 +105,14 @@ def get_paw_session() -> requests.Session:
     # Step 2 — submit username
     s.post(
         f'{AUTHENTIK}/api/v3/flows/executor/default-authentication-flow/',
-        json={'uid_field': cfg['username']},
+        json={'uid_field': cfg['auth_username']},
         headers={'X-CSRFToken': s.cookies.get('authentik_csrf', '')}
     )
 
     # Step 3 — submit password
     s.post(
         f'{AUTHENTIK}/api/v3/flows/executor/default-authentication-flow/',
-        json={'password': cfg['password']},
+        json={'password': cfg['auth_password']},
         headers={'X-CSRFToken': s.cookies.get('authentik_csrf', '')}
     )
 
