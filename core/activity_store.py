@@ -191,7 +191,7 @@ def get_stats(days=90):
         recent_sessions = conn.execute('''
             SELECT s.id, s.user, s.started_at, s.last_seen, s.book_count,
                    ROUND((JULIANDAY(s.last_seen) - JULIANDAY(s.started_at)) * 1440, 0) AS duration_mins,
-                   GROUP_CONCAT(DISTINCT h.book_name, ' · ') AS books_opened
+                   GROUP_CONCAT(h.book_name, '|||') AS books_opened
             FROM sessions s
             LEFT JOIN hits h ON h.session_id = s.id
             WHERE s.started_at >= ?
@@ -199,6 +199,21 @@ def get_stats(days=90):
             ORDER BY s.started_at DESC
             LIMIT 20
         ''', (since,)).fetchall()
+
+        # Deduplicate book names (SQLite GROUP_CONCAT DISTINCT doesn't support custom separator)
+        deduped = []
+        for r in recent_sessions:
+            d = dict(r)
+            if d.get('books_opened'):
+                seen = set()
+                unique = []
+                for name in d['books_opened'].split('|||'):
+                    if name not in seen:
+                        seen.add(name)
+                        unique.append(name)
+                d['books_opened'] = ' · '.join(unique)
+            deduped.append(d)
+        recent_sessions = deduped
 
         # Daily activity (sessions + hits per day)
         daily = conn.execute('''

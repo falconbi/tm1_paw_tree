@@ -139,15 +139,14 @@ def _list_books_for_activity():
 
     # Private books — walk each user's root folder
     try:
-        users = paw_get(session, 'users')
-        for user in users.get('value', []):
-            uid = user.get('id', '')
+        user_folders = paw_get(session, "Assets(path='%252fusers')/Assets")
+        for folder in user_folders.get('value', []):
+            uid = folder.get('name', '')  # folder name IS the user UUID
             if not uid:
                 continue
             try:
                 user_assets = paw_get(session, f"Assets(path='%252fusers%252f{uid}')/Assets")
-                walk_folder(user_assets.get('value', []), private=True,
-                            owner=user.get('prettyName') or user.get('name', uid))
+                walk_folder(user_assets.get('value', []), private=True, owner=uid)
             except Exception:
                 pass
     except Exception:
