@@ -1,4 +1,6 @@
 import os
+import time
+import threading
 import requests
 from pathlib import Path
 from urllib.parse import quote
@@ -11,6 +13,29 @@ PAW_USERNAME = os.environ.get('PAW_USERNAME', '')
 PAW_PASSWORD = os.environ.get('PAW_PASSWORD', '')
 
 PAW_CONFIG = {'paw_host': PAW_HOST}
+
+_session_lock   = threading.Lock()
+_cached_session = None
+_session_expiry = 0
+SESSION_TTL     = 600  # 10 minutes
+
+
+def get_cached_paw_session() -> requests.Session:
+    """Return a cached PAW session, re-authenticating if expired."""
+    global _cached_session, _session_expiry
+    with _session_lock:
+        if _cached_session and time.time() < _session_expiry:
+            return _cached_session
+        _cached_session = get_paw_session()
+        _session_expiry = time.time() + SESSION_TTL
+        return _cached_session
+
+
+def invalidate_paw_session():
+    global _cached_session, _session_expiry
+    with _session_lock:
+        _cached_session = None
+        _session_expiry = 0
 
 
 def get_paw_session() -> requests.Session:

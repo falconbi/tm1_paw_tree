@@ -1,24 +1,18 @@
 """
-core/tm1_connect.py — Multi-server TM1 session manager (V11 native auth).
+core/tm1_connect.py — TM1 session manager via PAW proxy.
 
-Reads server/database config from config/servers.json.
-Sessions are cached per (address, port) for SESSION_TTL seconds.
+Routes all TM1 REST calls through PAW at:
+  {PAW_HOST}/api/v0/tm1/{server}/api/v1/{resource}
+
+No direct TM1 connections — no per-server ports, addresses, or SSL config.
+Server names still come from config/servers.json (PAW has no list endpoint).
 """
 
 import json
-import time
-import threading
-import requests
-import urllib3
 from pathlib import Path
-
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+from core.paw_connect import get_cached_paw_session, PAW_HOST
 
 SERVERS_FILE = Path(__file__).parent.parent / 'config' / 'servers.json'
-SESSION_TTL  = 600  # 10 minutes
-
-_cache_lock    = threading.Lock()
-_session_cache = {}  # (address, port) → (session, expiry)
 
 
 def load_servers() -> list:
@@ -28,60 +22,26 @@ def load_servers() -> list:
 
 
 def get_server_list() -> list:
-    """Return [{name, databases:[name,...]}] — no credentials."""
-    servers = load_servers()
-    return [
-        {'name': s['name'], 'databases': [d['name'] for d in s['databases']]}
-        for s in servers
-    ]
+    """Return [{name, databases:[name]}] for the frontend server dropdown."""
+    return [{'name': s['name'], 'databases': [s['name']]} for s in load_servers()]
 
 
-def _find_profile(db_name: str) -> dict:
-    for server in load_servers():
-        for db in server['databases']:
-            if db['name'] == db_name:
-                return {
-                    'db_name':  db['name'],
-                    'address':  server['address'],
-                    'port':     db['port'],
-                    'ssl':      db.get('ssl', False),
-                    'user':     server.get('user', 'admin'),
-                    'password': server.get('password', ''),
-                }
-    raise ValueError(f"Database '{db_name}' not found in servers.json")
+class TM1ProxySession:
+    """PAW session scoped to one TM1 server via the /api/v0/tm1/ proxy."""
+
+    def __init__(self, paw_session, server_name: str):
+        self._session  = paw_session
+        self.base_url  = f'{PAW_HOST}/api/v0/tm1/{server_name}/api/v1'
+
+    def get(self, url, **kwargs):
+        headers = kwargs.pop('headers', {})
+        headers['ba-sso-authenticity'] = self._session.cookies.get('ba-sso-csrf', '')
+        return self._session.get(url, headers=headers, **kwargs)
 
 
-def _new_session(profile: dict) -> requests.Session:
-    session = requests.Session()
-    session.headers.update({'Content-Type': 'application/json'})
-    scheme = 'https' if profile.get('ssl') else 'http'
-    base = f"{scheme}://{profile['address']}:{profile['port']}"
-    session.auth     = (profile['user'], profile['password'])
-    session.base_url = f"{base}/api/v1"
-    if profile.get('ssl'):
-        session.verify = False
-    return session
-
-
-def get_session(db_name: str) -> requests.Session:
-    """Return a cached session for the named database, re-authenticating if expired."""
-    profile = _find_profile(db_name)
-    key     = (profile['address'], profile['port'])
-
-    with _cache_lock:
-        cached = _session_cache.get(key)
-        if cached and time.time() < cached[1]:
-            return cached[0]
-        session = _new_session(profile)
-        _session_cache[key] = (session, time.time() + SESSION_TTL)
-        return session
-
-
-def invalidate_session(db_name: str):
-    try:
-        profile = _find_profile(db_name)
-        key = (profile['address'], profile['port'])
-        with _cache_lock:
-            _session_cache.pop(key, None)
-    except Exception:
-        pass
+def get_session(db_name: str) -> TM1ProxySession:
+    """Return a TM1ProxySession for the named database."""
+    names = [s['name'] for s in load_servers()]
+    if db_name not in names:
+        raise ValueError(f"Database '{db_name}' not found in servers.json")
+    return TM1ProxySession(get_cached_paw_session(), db_name)
