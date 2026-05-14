@@ -262,7 +262,11 @@ def _flatten_books(tree):
 
 def _activity_mode():
     """Return 'log' if PAW_LOG_PATH is set and readable, else 'poll'."""
-    if PAW_LOG_PATH and Path(PAW_LOG_PATH).exists():
+    try:
+        log_exists = PAW_LOG_PATH and Path(PAW_LOG_PATH).exists()
+    except PermissionError:
+        log_exists = False
+    if log_exists:
         return 'log'
     return 'poll'
 

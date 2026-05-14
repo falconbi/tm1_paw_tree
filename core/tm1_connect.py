@@ -1,8 +1,7 @@
 """
-core/tm1_connect.py — Multi-server TM1 session manager.
+core/tm1_connect.py — Multi-server TM1 session manager (V11 native auth).
 
 Reads server/database config from config/servers.json.
-Supports V11 (HTTP basic auth) and V12 (OAuth2 client credentials).
 Sessions are cached per (address, port) for SESSION_TTL seconds.
 """
 
@@ -15,7 +14,7 @@ from pathlib import Path
 SERVERS_FILE = Path(__file__).parent.parent / 'config' / 'servers.json'
 SESSION_TTL  = 600  # 10 minutes
 
-_cache_lock   = threading.Lock()
+_cache_lock    = threading.Lock()
 _session_cache = {}  # (address, port) → (session, expiry)
 
 
@@ -39,14 +38,11 @@ def _find_profile(db_name: str) -> dict:
         for db in server['databases']:
             if db['name'] == db_name:
                 return {
-                    'db_name':       db['name'],
-                    'address':       server['address'],
-                    'port':          db['port'],
-                    'auth':          server.get('auth', 'v11'),
-                    'user':          server.get('user', 'admin'),
-                    'password':      server.get('password', ''),
-                    'client_id':     server.get('client_id', ''),
-                    'client_secret': server.get('client_secret', ''),
+                    'db_name':  db['name'],
+                    'address':  server['address'],
+                    'port':     db['port'],
+                    'user':     server.get('user', 'admin'),
+                    'password': server.get('password', ''),
                 }
     raise ValueError(f"Database '{db_name}' not found in servers.json")
 
@@ -54,27 +50,9 @@ def _find_profile(db_name: str) -> dict:
 def _new_session(profile: dict) -> requests.Session:
     session = requests.Session()
     session.headers.update({'Content-Type': 'application/json'})
-
-    if profile['auth'] == 'v11':
-        base = f"http://{profile['address']}:{profile['port']}"
-        session.auth     = (profile['user'], profile['password'])
-        session.base_url = f"{base}/api/v1"
-
-    elif profile['auth'] == 'v12':
-        base = f"http://{profile['address']}:{profile['port']}/tm1"
-        r = requests.post(
-            f"{base}/auth/v1/session",
-            auth=(profile['client_id'], profile['client_secret']),
-            headers={'Content-Type': 'application/json'},
-            json={'User': profile['user']},
-        )
-        r.raise_for_status()
-        session.cookies.set('TM1SessionId', r.cookies.get('TM1SessionId'))
-        session.base_url = f"{base}/api/v1/Databases('{profile['db_name']}')"
-
-    else:
-        raise ValueError(f"Unknown auth type: {profile['auth']}")
-
+    base = f"http://{profile['address']}:{profile['port']}"
+    session.auth     = (profile['user'], profile['password'])
+    session.base_url = f"{base}/api/v1"
     return session
 
 
