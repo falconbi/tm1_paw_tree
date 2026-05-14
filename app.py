@@ -84,6 +84,8 @@ _scheduler      = None
 _scheduler_lock = threading.Lock()
 _last_poll      = {'time': None, 'hits': 0, 'books': 0, 'error': None}
 _book_cache     = {}  # book_id → {name, path, private, owner}
+_impact_index   = None  # None = not built; {(server,cube,view): [{id,name,path}]}
+_impact_lock    = threading.Lock()
 
 
 def _load_activity_config():
@@ -609,19 +611,70 @@ def api_paw_users():
         return jsonify({'error': str(e)}), 500
 
 
+def _get_tm1_session(server):
+    from core.tm1_connect import get_session
+    return get_session(server)
+
+
+def _build_impact_index():
+    """Fetch all book contents and build {(server,cube,view): [{id,name,path}]}."""
+    global _impact_index
+    from core.paw_connect import get_paw_session, get_asset_by_id
+    index = {}
+    paw_session = get_paw_session()
+    for book_id, meta in list(_book_cache.items()):
+        try:
+            full = get_asset_by_id(paw_session, book_id, expand_content=True)
+            tabs = _extract_tabs(full.get('content', {}))
+            for tab in tabs:
+                for ref in tab.get('views', []):
+                    s, c, v = ref.get('server',''), ref.get('cube',''), ref.get('view','')
+                    if s and c and v:
+                        key = (s, c, v)
+                        entry = {'id': book_id, 'name': meta['name'], 'path': meta['path']}
+                        index.setdefault(key, [])
+                        if entry not in index[key]:
+                            index[key].append(entry)
+        except Exception as exc:
+            log.warning(f'Impact index: skipped book {book_id}: {exc}')
+    _impact_index = index
+    log.info(f'Impact index built: {len(index)} view keys across {len(_book_cache)} books')
+    return index
+
+
+def _get_impact_index():
+    global _impact_index
+    with _impact_lock:
+        if _impact_index is None:
+            _build_impact_index()
+        return _impact_index
+
+
+@app.route('/api/tm1/servers')
+def api_tm1_servers():
+    try:
+        from core.tm1_connect import get_server_list
+        return jsonify({'servers': get_server_list()})
+    except EnvironmentError:
+        return jsonify({'servers': []})
+    except Exception as e:
+        log.error(f'TM1 servers error: {e}')
+        return jsonify({'error': str(e)}), 500
+
+
 @app.route('/api/tm1/cubes')
 def api_tm1_cubes():
-    """Return all non-system cube names from TM1."""
+    server = request.args.get('server', '').strip()
+    if not server:
+        return jsonify({'cubes': []})
     try:
-        from core.tm1_connect import get_session
-        session = get_session()
+        session = _get_tm1_session(server)
         r = session.get(f"{session.base_url}/Cubes?$select=Name")
         r.raise_for_status()
-        cubes = sorted(
-            c['Name'] for c in r.json().get('value', [])
-            if not c['Name'].startswith('}')
-        )
+        cubes = sorted(c['Name'] for c in r.json().get('value', []) if not c['Name'].startswith('}'))
         return jsonify({'cubes': cubes})
+    except EnvironmentError:
+        return jsonify({'cubes': []})
     except Exception as e:
         log.error(f'TM1 cubes error: {e}')
         return jsonify({'error': str(e)}), 500
@@ -629,20 +682,18 @@ def api_tm1_cubes():
 
 @app.route('/api/tm1/views')
 def api_tm1_views():
-    """Return all non-system view names for a cube."""
-    cube = request.args.get('cube', '').strip()
-    if not cube:
-        return jsonify({'error': 'cube parameter required'}), 400
+    server = request.args.get('server', '').strip()
+    cube   = request.args.get('cube', '').strip()
+    if not server or not cube:
+        return jsonify({'views': []})
     try:
-        from core.tm1_connect import get_session
-        session = get_session()
+        session = _get_tm1_session(server)
         r = session.get(f"{session.base_url}/Cubes('{cube}')/Views?$select=Name")
         r.raise_for_status()
-        views = sorted(
-            v['Name'] for v in r.json().get('value', [])
-            if not v['Name'].startswith('}')
-        )
+        views = sorted(v['Name'] for v in r.json().get('value', []) if not v['Name'].startswith('}'))
         return jsonify({'views': views})
+    except EnvironmentError:
+        return jsonify({'views': []})
     except Exception as e:
         log.error(f'TM1 views error: {e}')
         return jsonify({'error': str(e)}), 500
@@ -650,44 +701,59 @@ def api_tm1_views():
 
 @app.route('/api/tm1/dimensions')
 def api_tm1_dimensions():
-    """Return all non-system dimension names for a cube."""
-    cube = request.args.get('cube', '').strip()
-    if not cube:
-        return jsonify({'error': 'cube parameter required'}), 400
+    """Dimensions for a specific cube (used in book drawer detail)."""
+    server = request.args.get('server', '').strip()
+    cube   = request.args.get('cube', '').strip()
+    if not server or not cube:
+        return jsonify({'dimensions': []})
     try:
-        from core.tm1_connect import get_session
-        session = get_session()
+        session = _get_tm1_session(server)
         r = session.get(f"{session.base_url}/Cubes('{cube}')/Dimensions?$select=Name")
         r.raise_for_status()
-        dims = sorted(
-            d['Name'] for d in r.json().get('value', [])
-            if not d['Name'].startswith('}')
-        )
+        dims = sorted(d['Name'] for d in r.json().get('value', []) if not d['Name'].startswith('}'))
         return jsonify({'dimensions': dims})
+    except EnvironmentError:
+        return jsonify({'dimensions': []})
     except Exception as e:
         log.error(f'TM1 dimensions error: {e}')
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/api/tm1/alldimensions')
+def api_tm1_all_dimensions():
+    """All dimensions on a server — no cube required (used by Impact tab)."""
+    server = request.args.get('server', '').strip()
+    if not server:
+        return jsonify({'dimensions': []})
+    try:
+        session = _get_tm1_session(server)
+        r = session.get(f"{session.base_url}/Dimensions?$select=Name")
+        r.raise_for_status()
+        dims = sorted(d['Name'] for d in r.json().get('value', []) if not d['Name'].startswith('}'))
+        return jsonify({'dimensions': dims})
+    except EnvironmentError:
+        return jsonify({'dimensions': []})
+    except Exception as e:
+        log.error(f'TM1 alldimensions error: {e}')
+        return jsonify({'error': str(e)}), 500
+
+
 @app.route('/api/tm1/subsets')
 def api_tm1_subsets():
-    """Return all non-system subset names for a dimension."""
-    cube      = request.args.get('cube', '').strip()
+    server    = request.args.get('server', '').strip()
     dimension = request.args.get('dimension', '').strip()
-    if not cube or not dimension:
-        return jsonify({'error': 'cube and dimension parameters required'}), 400
+    if not server or not dimension:
+        return jsonify({'subsets': []})
     try:
-        from core.tm1_connect import get_session
-        session = get_session()
+        session = _get_tm1_session(server)
         r = session.get(
             f"{session.base_url}/Dimensions('{dimension}')/Hierarchies('{dimension}')/Subsets?$select=Name"
         )
         r.raise_for_status()
-        subsets = sorted(
-            s['Name'] for s in r.json().get('value', [])
-            if not s['Name'].startswith('}')
-        )
+        subsets = sorted(s['Name'] for s in r.json().get('value', []) if not s['Name'].startswith('}'))
         return jsonify({'subsets': subsets})
+    except EnvironmentError:
+        return jsonify({'subsets': []})
     except Exception as e:
         log.error(f'TM1 subsets error: {e}')
         return jsonify({'error': str(e)}), 500
@@ -695,20 +761,21 @@ def api_tm1_subsets():
 
 @app.route('/api/tm1/subset_info')
 def api_tm1_subset_info():
-    """Return member count for a subset."""
+    server    = request.args.get('server', '').strip()
     dimension = request.args.get('dimension', '').strip()
     subset    = request.args.get('subset', '').strip()
-    if not dimension or not subset:
-        return jsonify({'error': 'dimension and subset parameters required'}), 400
+    if not server or not dimension or not subset:
+        return jsonify({'count': 0})
     try:
-        from core.tm1_connect import get_session
-        session = get_session()
+        session = _get_tm1_session(server)
         r = session.get(
             f"{session.base_url}/Dimensions('{dimension}')/Hierarchies('{dimension}')"
             f"/Subsets('{subset}')/Elements?$count=true&$top=0"
         )
         r.raise_for_status()
         return jsonify({'count': r.json().get('@odata.count', 0)})
+    except EnvironmentError:
+        return jsonify({'count': 0})
     except Exception as e:
         log.error(f'TM1 subset_info error: {e}')
         return jsonify({'error': str(e)}), 500
@@ -716,18 +783,15 @@ def api_tm1_subset_info():
 
 @app.route('/api/tm1/views_with_subset')
 def api_tm1_views_with_subset():
-    """Return view names that use a specific subset for a given dimension on a cube."""
+    server    = request.args.get('server', '').strip()
     cube      = request.args.get('cube', '').strip()
     dimension = request.args.get('dimension', '').strip()
     subset    = request.args.get('subset', '').strip()
-    if not cube or not dimension or not subset:
-        return jsonify({'error': 'cube, dimension and subset parameters required'}), 400
+    if not server or not cube or not dimension or not subset:
+        return jsonify({'views': []})
     try:
-        from core.tm1_connect import get_session
-        session = get_session()
-        r = session.get(
-            f"{session.base_url}/Cubes('{cube}')/Views?$expand=Rows,Columns,Titles"
-        )
+        session   = _get_tm1_session(server)
+        r         = session.get(f"{session.base_url}/Cubes('{cube}')/Views?$expand=Rows,Columns,Titles")
         r.raise_for_status()
         dim_lc    = dimension.lower()
         subset_lc = subset.lower()
@@ -739,8 +803,8 @@ def api_tm1_views_with_subset():
             found = False
             for axis in ('Rows', 'Columns', 'Titles'):
                 for entry in (view.get(axis) or []):
-                    if (entry.get('DimensionName', '').lower() == dim_lc and
-                            entry.get('SubsetName', '').lower() == subset_lc):
+                    if (entry.get('DimensionName','').lower() == dim_lc and
+                            entry.get('SubsetName','').lower() == subset_lc):
                         found = True
                         break
                 if found:
@@ -748,6 +812,8 @@ def api_tm1_views_with_subset():
             if found:
                 matching.append(name)
         return jsonify({'views': matching})
+    except EnvironmentError:
+        return jsonify({'views': []})
     except Exception as e:
         log.error(f'TM1 views_with_subset error: {e}')
         return jsonify({'error': str(e)}), 500
@@ -755,25 +821,113 @@ def api_tm1_views_with_subset():
 
 @app.route('/api/tm1/mdx')
 def api_tm1_mdx():
-    """Return the MDX query for a named view (MDX views only)."""
-    cube = request.args.get('cube', '').strip()
-    view = request.args.get('view', '').strip()
-    if not cube or not view:
-        return jsonify({'error': 'cube and view parameters required'}), 400
+    server = request.args.get('server', '').strip()
+    cube   = request.args.get('cube', '').strip()
+    view   = request.args.get('view', '').strip()
+    if not server or not cube or not view:
+        return jsonify({'error': 'server, cube and view parameters required'}), 400
     try:
-        from core.tm1_connect import get_session
-        session = get_session()
+        session = _get_tm1_session(server)
         r = session.get(f"{session.base_url}/Cubes('{cube}')/Views('{view}')?$select=Name,MDX")
         r.raise_for_status()
-        data = r.json()
-        mdx  = data.get('MDX') or ''
+        mdx = r.json().get('MDX') or ''
         return jsonify({
             'mdx':     mdx or None,
             'type':    'MDXView' if mdx else 'NativeView',
             'message': None if mdx else 'Native view — no MDX query',
         })
+    except EnvironmentError:
+        return jsonify({'mdx': None, 'type': None, 'message': 'TM1 not configured'})
     except Exception as e:
         log.error(f'TM1 MDX error: {e}')
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/tm1/impact/build', methods=['POST'])
+def api_tm1_impact_build():
+    """Force rebuild of the impact index from all PAW book content."""
+    global _impact_index
+    with _impact_lock:
+        _impact_index = None
+    try:
+        index = _get_impact_index()
+        return jsonify({'status': 'ok', 'entries': len(index)})
+    except Exception as e:
+        log.error(f'Impact index build error: {e}')
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/tm1/impact')
+def api_tm1_impact():
+    """Return PAW books affected by a TM1 view, dimension, or subset change."""
+    server    = request.args.get('server', '').strip()
+    cube      = request.args.get('cube', '').strip()
+    view      = request.args.get('view', '').strip()
+    dimension = request.args.get('dimension', '').strip()
+    subset    = request.args.get('subset', '').strip()
+
+    if not server:
+        return jsonify({'error': 'server parameter required'}), 400
+
+    try:
+        index = _get_impact_index()
+
+        if view and cube:
+            # Direct view match
+            books = index.get((server, cube, view), [])
+
+        elif dimension:
+            # Find cubes that have this dimension, then match books
+            session = _get_tm1_session(server)
+            r = session.get(f"{session.base_url}/Cubes?$expand=Dimensions($select=Name)&$select=Name")
+            r.raise_for_status()
+            cubes_with_dim = {
+                c['Name'] for c in r.json().get('value', [])
+                if not c['Name'].startswith('}')
+                and any(d['Name'] == dimension for d in c.get('Dimensions', []))
+            }
+
+            if subset:
+                # Narrow to views that specifically use this subset
+                dim_lc    = dimension.lower()
+                subset_lc = subset.lower()
+                matched_keys = set()
+                for cube_name in cubes_with_dim:
+                    r2 = session.get(
+                        f"{session.base_url}/Cubes('{cube_name}')/Views?$expand=Rows,Columns,Titles"
+                    )
+                    if not r2.ok:
+                        continue
+                    for v in r2.json().get('value', []):
+                        vname = v.get('Name', '')
+                        if vname.startswith('}'):
+                            continue
+                        for axis in ('Rows', 'Columns', 'Titles'):
+                            for entry in (v.get(axis) or []):
+                                if (entry.get('DimensionName','').lower() == dim_lc and
+                                        entry.get('SubsetName','').lower() == subset_lc):
+                                    matched_keys.add((server, cube_name, vname))
+                                    break
+                books_map = {}
+                for key in matched_keys:
+                    for b in index.get(key, []):
+                        books_map[b['id']] = b
+                books = list(books_map.values())
+            else:
+                # Any book referencing a cube that uses this dimension
+                books_map = {}
+                for (s, c, v), book_list in index.items():
+                    if s == server and c in cubes_with_dim:
+                        for b in book_list:
+                            books_map[b['id']] = b
+                books = list(books_map.values())
+        else:
+            return jsonify({'error': 'Provide cube+view or dimension'}), 400
+
+        return jsonify({'books': books, 'count': len(books)})
+
+    except Exception as e:
+        log.error(f'TM1 impact error: {e}')
         return jsonify({'error': str(e)}), 500
 
 

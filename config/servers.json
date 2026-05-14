@@ -1,0 +1,58 @@
+[
+  {
+    "name": "24retail",
+    "address": "192.168.1.179",
+    "auth": "v11",
+    "user": "admin",
+    "password": "apple",
+    "databases": [{"name": "24retail", "port": 52670}]
+  },
+  {
+    "name": "GO_New_Stores",
+    "address": "192.168.1.179",
+    "auth": "v11",
+    "user": "admin",
+    "password": "apple",
+    "databases": [{"name": "GO_New_Stores", "port": 5010}]
+  },
+  {
+    "name": "GO_Scorecards",
+    "address": "192.168.1.179",
+    "auth": "v11",
+    "user": "admin",
+    "password": "apple",
+    "databases": [{"name": "GO_Scorecards", "port": 44312}]
+  },
+  {
+    "name": "Planning Sample",
+    "address": "192.168.1.179",
+    "auth": "v11",
+    "user": "admin",
+    "password": "apple",
+    "databases": [{"name": "Planning Sample", "port": 12354}]
+  },
+  {
+    "name": "Propel_Consolidation",
+    "address": "192.168.1.179",
+    "auth": "v11",
+    "user": "admin",
+    "password": "apple",
+    "databases": [{"name": "Propel_Consolidation", "port": 8015}]
+  },
+  {
+    "name": "proven_techniques",
+    "address": "192.168.1.179",
+    "auth": "v11",
+    "user": "admin",
+    "password": "apple",
+    "databases": [{"name": "proven_techniques", "port": 5011}]
+  },
+  {
+    "name": "SData",
+    "address": "192.168.1.179",
+    "auth": "v11",
+    "user": "admin",
+    "password": "apple",
+    "databases": [{"name": "SData", "port": 8010}]
+  }
+]
