@@ -37,15 +37,13 @@ Browser (http://localhost:8082)
 
 **PAW V11 auth:** POST username/password to `/login/form/` → sets `paSession` + `ba-sso-csrf` cookies. No OAuth, no PKCE, no Authentik.
 
-**TM1 auth (direct):** HTTP basic auth at `http(s)://192.168.1.179:{port}/api/v1`. Sessions cached 10 min per database. SSL/HTTPS databases use `verify=False` (self-signed certs).
-
-**TM1 auth (via PAW proxy):** PAW exposes a TM1 REST proxy at:
+**TM1 auth:** All TM1 calls route through the PAW proxy — no direct TM1 connections:
 ```
-GET {PAW_HOST}/api/v0/tm1/{server_name}/api/v1/{resource}
+{PAW_HOST}/api/v0/tm1/{server_name}/api/v1/{resource}
 ```
-This works for all TM1 servers through a single PAW session — no per-server ports or SSL config needed. Confirmed working on V11 for all 7 databases. Requires `x-csrf-token` header (= value of `ba-sso-csrf` cookie) on non-GET requests.
+`TM1ProxySession` in `tm1_connect.py` wraps the cached PAW session and injects the CSRF header automatically. No per-server ports, addresses, or SSL config. PAW session is cached for 10 minutes (`get_cached_paw_session()`).
 
-PAW does not expose an endpoint to list available TM1 server names — `config/servers.json` is still needed for that.
+PAW has no endpoint to list TM1 server names — `config/servers.json` is still needed for that. Format is simply `[{"name": "ServerName"}, ...]`.
 
 ---
 
@@ -56,7 +54,7 @@ PAW does not expose an endpoint to list available TM1 server names — `config/s
 ├── app.py                        # Flask server — all routes
 ├── core/
 │   ├── paw_connect.py            # PAW V11 session (get_paw_session, paw_get, PAW_CONFIG)
-│   ├── tm1_connect.py            # TM1 multi-server sessions (get_session, load_servers)
+│   ├── tm1_connect.py            # TM1ProxySession via PAW proxy (get_session, load_servers)
 │   ├── activity_store.py         # SQLite activity tracking
 │   └── groups.json               # Role/group definitions
 ├── paw_tree/
@@ -153,8 +151,9 @@ Sessions: book opens within 2 hours are grouped into one session. History retain
 ## TODO
 
 ### High Priority
-- [ ] Migrate TM1 calls to PAW proxy (`/api/v0/tm1/{server}/api/v1/...`) — eliminates direct TM1 connections, port config, and SSL issues
-- [ ] Auto-discover TM1 server names from PAW (no known endpoint yet — may need to scrape PAW config or keep servers.json)
+
+- [x] Migrate TM1 calls to PAW proxy — done, all 7 servers confirmed working
+- [ ] Auto-discover TM1 server names from PAW (no known endpoint — servers.json still required)
 - [ ] Add `/api/paw/users` endpoint — fixes orphaned book detection
 
 ### Medium Priority
