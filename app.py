@@ -877,8 +877,26 @@ def api_tm1_impact():
         index = _get_impact_index()
 
         if view and cube:
-            # Direct view match
+            # Exact view match
             books = index.get((server, cube, view), [])
+
+        elif cube:
+            # All views in this cube
+            books_map = {}
+            for (s, c, v), book_list in index.items():
+                if s == server and c == cube:
+                    for b in book_list:
+                        books_map[b['id']] = b
+            books = list(books_map.values())
+
+        elif not dimension:
+            # Server only — all books referencing any view on this server
+            books_map = {}
+            for (s, c, v), book_list in index.items():
+                if s == server:
+                    for b in book_list:
+                        books_map[b['id']] = b
+            books = list(books_map.values())
 
         elif dimension:
             # Find cubes that have this dimension, then match books
@@ -925,8 +943,6 @@ def api_tm1_impact():
                         for b in book_list:
                             books_map[b['id']] = b
                 books = list(books_map.values())
-        else:
-            return jsonify({'error': 'Provide cube+view or dimension'}), 400
 
         return jsonify({'books': books, 'count': len(books)})
 

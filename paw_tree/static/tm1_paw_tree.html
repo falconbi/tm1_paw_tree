@@ -98,7 +98,6 @@ body { display: flex; flex-direction: column; }
 
 /* TREE */
 #tree-wrap { flex: 1; overflow-y: auto; background: var(--bg); padding: 8px 0; }
-#impact-wrap { flex: 1; min-height: 0; overflow-y: auto; padding: 20px 24px; }
 
 .tree-row {
   display: flex; align-items: center; gap: 6px;
@@ -326,7 +325,7 @@ body { display: flex; flex-direction: column; }
 <div id="tree-wrap"><div id="tree"></div></div>
 <div id="dashboard-wrap"></div>
 <div id="activity-wrap" style="display:none;flex:1;overflow-y:auto;padding:18px 20px;"></div>
-<div id="impact-wrap" style="display:none">
+<div id="impact-wrap" style="display:none;flex:1;overflow-y:auto;padding:20px 24px;">
   <div class="imp-header">
     <div class="imp-row">
       <span class="imp-label">Server</span>
@@ -463,6 +462,28 @@ function findNode(id, nodes) {
     if (f) return f;
   }
   return null;
+}
+function findAncestorIds(targetId, nodes, acc) {
+  acc = acc || [];
+  for (const n of nodes) {
+    if (n.id === targetId) return acc;
+    if (n.children && n.children.length) {
+      const found = findAncestorIds(targetId, n.children, [...acc, n.id]);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+function navigateToBook(bookId) {
+  switchTab('tree');
+  const ancestors = findAncestorIds(bookId, TREE) || [];
+  ancestors.forEach(function(id) { openIds.add(id); });
+  renderTree(getFilteredTree());
+  const row = document.querySelector('.tree-row[data-id="' + bookId + '"]');
+  if (row) {
+    row.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    row.click();
+  }
 }
 function statusColor(s) {
   if (s === 'Draft') return 'var(--amber)';
@@ -1206,6 +1227,7 @@ function onImpServerChange() {
   document.getElementById('imp-empty').style.display       = server ? 'none' : '';
   if (!server) return;
   impSwitchTrack(_impCurrentTrack);
+  if (_impCurrentTrack === 'views') _runImpact(server, {});
 }
 
 function impSwitchTrack(track) {
@@ -1242,9 +1264,9 @@ function onImpCubeChange() {
   var server = document.getElementById('imp-server').value;
   var cube   = document.getElementById('imp-cube').value;
   var vsel   = document.getElementById('imp-view');
-  vsel.innerHTML = '<option value="">loading…</option>';
-  document.getElementById('imp-results').style.display = 'none';
-  if (!cube) { vsel.innerHTML = '<option value="">— select view —</option>'; return; }
+  vsel.innerHTML = '<option value="">— select view —</option>';
+  if (!cube) { _runImpact(server, {}); return; }
+  _runImpact(server, {cube: cube});
   fetch('/api/tm1/views?server=' + encodeURIComponent(server) + '&cube=' + encodeURIComponent(cube))
     .then(function(r) { return r.json(); })
     .then(function(d) {
@@ -1259,8 +1281,7 @@ function onImpViewChange() {
   var server = document.getElementById('imp-server').value;
   var cube   = document.getElementById('imp-cube').value;
   var view   = document.getElementById('imp-view').value;
-  if (!view) { document.getElementById('imp-results').style.display = 'none'; return; }
-  _runImpact(server, {cube: cube, view: view});
+  _runImpact(server, view ? {cube: cube, view: view} : {cube: cube});
 }
 
 function _loadImpDimensions(server) {
@@ -1326,7 +1347,7 @@ function _runImpact(server, params) {
         listEl.innerHTML = '<div class="imp-none">No PAW books reference this object</div>';
       } else {
         listEl.innerHTML = books.map(function(b) {
-          return '<div class="imp-book-row" onclick="switchTab(\'tree\')">'
+          return '<div class="imp-book-row" onclick="navigateToBook(\'' + escHtml(b.id) + '\')">'
             + '<div class="imp-book-name">' + escHtml(b.name) + '</div>'
             + '<div class="imp-book-path">' + escHtml(b.path) + '</div>'
             + '</div>';
