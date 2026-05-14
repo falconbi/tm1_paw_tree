@@ -1,6 +1,6 @@
 # TM1 PAW Tree
 
-Governance and visibility tool for IBM Planning Analytics Workspace (PAW).
+Governance and visibility tool for IBM Planning Analytics Workspace (PAW) V11.
 
 Gives administrators a single view of all PAW books — who created them, when they were last opened, what TM1 views they reference, and which ones haven't been touched in months.
 
@@ -16,6 +16,7 @@ Gives administrators a single view of all PAW books — who created them, when t
 | **Group Filter** | Overlay folder permissions for any access group |
 | **Dashboard** | Stats overview — orphaned books (90+ days inactive), private book inventory |
 | **Activity Tracking** | Background polling detects real book opens; session-deduplication groups activity into user sessions |
+| **Impact Panel** | Select a TM1 server, cube, or view to see which PAW books would be affected by a change — results highlight directly in the tree |
 | **Workbench vs Dashboard** | Distinct icons for new PAW Workbench and classic Dashboard book types |
 
 ---
@@ -23,7 +24,8 @@ Gives administrators a single view of all PAW books — who created them, when t
 ## Requirements
 
 - Python 3.10+
-- IBM Planning Analytics Workspace (PAW) — on-prem V11 or V12
+- IBM Planning Analytics Workspace (PAW) V11 on-prem
+- IBM TM1 V11 on-prem (one or more servers)
 
 ---
 
@@ -44,31 +46,35 @@ cp .env.example .env
 
 Edit `.env`:
 
-**PAW V11 (TM1 native auth — most on-prem installs):**
-
 ```env
 PAW_HOST=http://192.168.x.x
-PAW_AUTH_MODE=native
 PAW_USERNAME=admin
 PAW_PASSWORD=your_tm1_password
-PAW_ACCOUNT_ID=your_account_id
-PAW_TENANT_ID=your_tenant_id
-```
 
-**PAW V12 (Authentik OAuth2 PKCE):**
-
-```env
-PAW_HOST=http://192.168.x.x
-PAW_AUTH_MODE=authentik
-PAW_ACCOUNT_ID=your_account_id
-PAW_TENANT_ID=your_tenant_id
-
-AUTHENTIK_HOST=http://192.168.x.x:9000
-AUTHENTIK_USERNAME=admin
-AUTHENTIK_PASSWORD=your_password
+# Optional — log-based activity tracking (poll mode used if left blank)
+# PAW_LOG_PATH=/path/to/WAProxy.log
 ```
 
 `PAW_ACCOUNT_ID` and `PAW_TENANT_ID` are used to build deep-links back into PAW. Find them in the PAW URL when logged in: `/?accountId=...&tenantId=...`
+
+Edit `config/servers.json` to list your TM1 databases:
+
+```json
+[
+  {
+    "name": "MyServer",
+    "address": "192.168.x.x",
+    "auth": "v11",
+    "user": "admin",
+    "password": "apple",
+    "databases": [
+      {"name": "MyDatabase", "port": 12345, "ssl": false}
+    ]
+  }
+]
+```
+
+Set `"ssl": true` for databases that use HTTPS (self-signed certs are accepted automatically).
 
 ### 3. Run
 
@@ -84,23 +90,22 @@ Open **http://localhost:8082**
 
 ## Configuration Reference
 
+### .env
+
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `PAW_HOST` | Yes | PAW server URL e.g. `http://192.168.1.100` |
-| `PAW_AUTH_MODE` | Yes | `native` for V11 TM1 login, `authentik` for V12 OAuth2 |
-| `PAW_ACCOUNT_ID` | Yes | PAW account ID (from browser URL) |
-| `PAW_TENANT_ID` | Yes | PAW tenant ID (from browser URL) |
-| `PAW_USERNAME` | V11 only | TM1 admin username |
-| `PAW_PASSWORD` | V11 only | TM1 admin password |
-| `AUTHENTIK_HOST` | V12 only | Authentik IdP URL e.g. `http://192.168.1.100:9000` |
-| `AUTHENTIK_USERNAME` | V12 only | Admin account used for PAW API access |
-| `AUTHENTIK_PASSWORD` | V12 only | Password for above account |
+| `PAW_HOST` | Yes | PAW server URL e.g. `http://192.168.1.37` |
+| `PAW_USERNAME` | Yes | TM1 admin username |
+| `PAW_PASSWORD` | Yes | TM1 admin password |
+| `PAW_ACCOUNT_ID` | No | PAW account ID (from browser URL) — enables deep-links |
+| `PAW_TENANT_ID` | No | PAW tenant ID (from browser URL) — enables deep-links |
+| `PAW_LOG_PATH` | No | Path to `WAProxy.log` for log-based activity tracking |
 
----
+### config/servers.json
 
-## User Guide
+Lists all TM1 databases available to the Impact panel. Each server entry can have multiple databases, each with its own port. Set `"ssl": true` for HTTPS databases (self-signed certs are trusted).
 
-See [docs/USER_GUIDE.md](docs/USER_GUIDE.md) for full usage instructions.
+This file is not committed to git — deploy it separately to each environment.
 
 ---
 
@@ -109,19 +114,24 @@ See [docs/USER_GUIDE.md](docs/USER_GUIDE.md) for full usage instructions.
 ```
 Browser (http://localhost:8082)
     └── Flask app.py
-            ├── core/paw_connect.py      → PAW Content Services API (Authentik PKCE)
-            ├── core/activity_store.py   → SQLite session/hit tracking
+            ├── core/paw_connect.py      → PAW V11 session auth (username/password cookie)
+            ├── core/tm1_connect.py      → Multi-server TM1 session manager (HTTP basic auth)
             └── paw_tree/static/         → Single-page HTML frontend
 ```
 
-PAW authentication uses a 6-step Authentik OAuth2 PKCE flow. Every API call creates a fresh authenticated session — no session caching between requests.
+**PAW auth** — simple username/password POST to `/login/form/` sets a session cookie. No OAuth, no PKCE.
 
-Activity tracking polls PAW asset metadata (not content) every N minutes and diffs `used_date` to detect real book opens without contaminating the data.
+**TM1 auth** — HTTP basic auth at `http(s)://address:port/api/v1`. Sessions are cached per database for 10 minutes.
+
+**Activity tracking** — polls PAW asset metadata every N minutes and diffs `used_date` to detect real book opens. If `PAW_LOG_PATH` is set and readable, switches to log-based mode for per-user attribution.
+
+**Impact index** — built on first use by scanning all cached PAW book content for TM1 view references. Keyed by `(server, cube, view)`. Progressive filtering: selecting a server shows all affected books; narrowing to a cube or view refines the results.
 
 ---
 
 ## Notes
 
-- All PAW sessions run under the configured admin account. The `used_by` field in activity reflects PAW's own attribution, not individual Authentik users.
-- Private books are fully visible to admin. The tool walks `/users/` to enumerate all users' private content.
+- All PAW sessions run under the configured admin account.
+- Private books are fully visible to admin — the tool walks `/users/` to enumerate all users' private content.
 - Book tab/view data is fetched on demand when a book drawer is opened — the tree load itself does not touch book content.
+- `config/servers.json` is gitignored — never commit credentials.
