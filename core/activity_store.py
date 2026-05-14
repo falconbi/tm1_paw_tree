@@ -191,7 +191,7 @@ def get_stats(days=90):
         recent_sessions = conn.execute('''
             SELECT s.id, s.user, s.started_at, s.last_seen, s.book_count,
                    ROUND((JULIANDAY(s.last_seen) - JULIANDAY(s.started_at)) * 1440, 0) AS duration_mins,
-                   GROUP_CONCAT(h.book_name, ' · ') AS books_opened
+                   GROUP_CONCAT(DISTINCT h.book_name, ' · ') AS books_opened
             FROM sessions s
             LEFT JOIN hits h ON h.session_id = s.id
             WHERE s.started_at >= ?
