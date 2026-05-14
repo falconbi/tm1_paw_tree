@@ -61,7 +61,7 @@ Click **Refresh** in the topbar to re-fetch the full tree from PAW. The button s
 
 ## Book Detail Drawer
 
-![Book drawer screenshot](images/book_drawer.png)
+![Book drawer screenshot](images/book_draw.png)
 
 Click any book to open its detail panel on the right.
 
