@@ -135,3 +135,9 @@ Browser (http://localhost:8082)
 - Private books are fully visible to admin — the tool walks `/users/` to enumerate all users' private content.
 - Book tab/view data is fetched on demand when a book drawer is opened — the tree load itself does not touch book content.
 - `config/servers.json` is gitignored — never commit credentials.
+
+---
+
+## User Guide
+
+See [docs/USER_GUIDE.md](docs/USER_GUIDE.md) for full usage instructions.
