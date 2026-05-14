@@ -97,7 +97,12 @@ body { display: flex; flex-direction: column; }
 #tree-count { font-size: 11px; color: var(--muted); }
 
 /* TREE */
-#tree-wrap { flex: 1; overflow-y: auto; background: var(--bg); padding: 8px 0; }
+#tree-area { display: flex; flex: 1; overflow: hidden; }
+#tree-wrap { flex: 1; overflow-y: auto; background: var(--bg); padding: 8px 0; min-width: 0; }
+#impact-panel { width: 320px; flex-shrink: 0; border-left: 1px solid var(--border); overflow-y: auto; padding: 14px 16px; display: none; background: var(--surface); }
+.impact-toggle { display: flex; align-items: center; gap: 5px; padding: 5px 10px; background: var(--card); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; font-size: 12px; color: var(--muted); font-family: var(--font-ui); transition: border-color .15s, color .15s; }
+.impact-toggle.active { border-color: var(--accent); color: var(--accent); }
+.imp-panel-title { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 12px; }
 
 .tree-row {
   display: flex; align-items: center; gap: 6px;
@@ -222,10 +227,10 @@ body { display: flex; flex-direction: column; }
 /* ── Impact tab ────────────────────────────────────────────────── */
 .imp-header { margin-bottom: 4px; }
 .imp-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-.imp-label { font-size: 11px; color: var(--muted); width: 80px; flex-shrink: 0; text-align: right; }
-.imp-select { flex: 1; max-width: 320px; font-size: 12px; padding: 5px 8px; background: var(--card); border: 1px solid var(--border); color: var(--text); border-radius: 4px; font-family: var(--font-ui); }
+.imp-label { font-size: 11px; color: var(--muted); width: 64px; flex-shrink: 0; }
+.imp-select { flex: 1; min-width: 0; font-size: 12px; padding: 5px 8px; background: var(--card); border: 1px solid var(--border); color: var(--text); border-radius: 4px; font-family: var(--font-ui); }
 .imp-select:focus { outline: none; border-color: var(--accent); }
-.imp-subtabs { display: flex; gap: 6px; margin: 14px 0 12px 90px; }
+.imp-subtabs { display: flex; gap: 6px; margin: 12px 0 10px 0; }
 .imp-subtab { font-size: 11px; padding: 4px 16px; border-radius: 14px; border: 1px solid var(--border); background: var(--faint); color: var(--muted); cursor: pointer; font-family: var(--font-ui); transition: all .15s; }
 .imp-subtab.active { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 500; }
 .imp-index-status { font-size: 10px; color: var(--muted); margin-left: 6px; }
@@ -278,7 +283,6 @@ body { display: flex; flex-direction: column; }
   <button class="tab-btn active" id="tab-tree-btn" onclick="switchTab('tree')">Tree</button>
   <button class="tab-btn" id="tab-dashboard-btn" onclick="switchTab('dashboard')">Dashboard</button>
   <button class="tab-btn" id="tab-activity-btn" onclick="switchTab('activity')">Activity</button>
-  <button class="tab-btn" id="tab-impact-btn" onclick="switchTab('impact')">Impact</button>
 </div>
 
 <div id="toolbar">
@@ -293,86 +297,67 @@ body { display: flex; flex-direction: column; }
       <option value="">All groups</option>
     </select>
   </div>
-  <div id="cube-filter-wrap" class="cube-view-wrap">
-    <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><rect x="1" y="4" width="9" height="6" rx="1" stroke="var(--muted)" stroke-width="1.1"/><path d="M3 4V3a2 2 0 0 1 5 0v1" stroke="var(--muted)" stroke-width="1.1" fill="none"/></svg>
-    <select id="cube-select" onchange="onCubeFilter(this.value)">
-      <option value="">All cubes</option>
-    </select>
-  </div>
-  <div id="view-filter-wrap" class="cube-view-wrap">
-    <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><rect x="1" y="1" width="9" height="9" rx="1.5" stroke="var(--muted)" stroke-width="1.1"/><line x1="1" y1="4" x2="10" y2="4" stroke="var(--muted)" stroke-width=".8"/></svg>
-    <select id="view-select" onchange="onViewFilter(this.value)" disabled>
-      <option value="">All views</option>
-    </select>
-  </div>
-  <div id="dim-filter-wrap" class="cube-view-wrap">
-    <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M5.5 1L10 3.5v4L5.5 10 1 7.5v-4L5.5 1z" stroke="var(--muted)" stroke-width="1.1" fill="none"/><line x1="5.5" y1="1" x2="5.5" y2="10" stroke="var(--muted)" stroke-width=".7"/></svg>
-    <select id="dim-select" onchange="onDimFilter(this.value)" disabled>
-      <option value="">All dimensions</option>
-    </select>
-  </div>
-  <div id="subset-filter-wrap" class="cube-view-wrap">
-    <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><circle cx="5.5" cy="5.5" r="4" stroke="var(--muted)" stroke-width="1.1"/><circle cx="5.5" cy="5.5" r="1.8" stroke="var(--muted)" stroke-width=".9"/></svg>
-    <select id="subset-select" onchange="onSubsetFilter(this.value)" disabled>
-      <option value="">All subsets</option>
-    </select>
-  </div>
   <div id="toolbar-spacer"></div>
+  <button class="impact-toggle" id="impact-toggle-btn" onclick="toggleImpactPanel()">
+    <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M1 5.5h9M5.5 1v9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><circle cx="5.5" cy="5.5" r="4" stroke="currentColor" stroke-width="1.1"/></svg>
+    Impact
+  </button>
   <div id="tree-count"></div>
 </div>
 
 
-<div id="tree-wrap"><div id="tree"></div></div>
-<div id="dashboard-wrap"></div>
-<div id="activity-wrap" style="display:none;flex:1;overflow-y:auto;padding:18px 20px;"></div>
-<div id="impact-wrap" style="display:none;flex:1;overflow-y:auto;padding:20px 24px;">
-  <div class="imp-header">
+<div id="tree-area">
+  <div id="tree-wrap"><div id="tree"></div></div>
+  <div id="impact-panel">
+    <div class="imp-panel-title">Impact</div>
     <div class="imp-row">
       <span class="imp-label">Server</span>
       <select id="imp-server" class="imp-select" onchange="onImpServerChange()">
         <option value="">— select server —</option>
       </select>
-      <span id="imp-index-status" class="imp-index-status"></span>
     </div>
-  </div>
-  <div id="imp-subtabs" class="imp-subtabs" style="display:none">
-    <button class="imp-subtab active" id="imp-subtab-views" onclick="impSwitchTrack('views')">Views</button>
-    <button class="imp-subtab" id="imp-subtab-dims" onclick="impSwitchTrack('dimensions')">Dimensions</button>
-  </div>
-  <div id="imp-track-views" style="display:none">
-    <div class="imp-row">
-      <span class="imp-label">Cube</span>
-      <select id="imp-cube" class="imp-select" onchange="onImpCubeChange()">
-        <option value="">— select cube —</option>
-      </select>
+    <div id="imp-index-status" class="imp-index-status" style="margin-bottom:6px;"></div>
+    <div id="imp-subtabs" class="imp-subtabs" style="display:none">
+      <button class="imp-subtab active" id="imp-subtab-views" onclick="impSwitchTrack('views')">Views</button>
+      <button class="imp-subtab" id="imp-subtab-dims" onclick="impSwitchTrack('dimensions')">Dimensions</button>
     </div>
-    <div class="imp-row">
-      <span class="imp-label">View</span>
-      <select id="imp-view" class="imp-select" onchange="onImpViewChange()">
-        <option value="">— select view —</option>
-      </select>
+    <div id="imp-track-views" style="display:none">
+      <div class="imp-row">
+        <span class="imp-label">Cube</span>
+        <select id="imp-cube" class="imp-select" onchange="onImpCubeChange()">
+          <option value="">— select cube —</option>
+        </select>
+      </div>
+      <div class="imp-row">
+        <span class="imp-label">View</span>
+        <select id="imp-view" class="imp-select" onchange="onImpViewChange()">
+          <option value="">— select view —</option>
+        </select>
+      </div>
     </div>
-  </div>
-  <div id="imp-track-dims" style="display:none">
-    <div class="imp-row">
-      <span class="imp-label">Dimension</span>
-      <select id="imp-dimension" class="imp-select" onchange="onImpDimChange()">
-        <option value="">— select dimension —</option>
-      </select>
+    <div id="imp-track-dims" style="display:none">
+      <div class="imp-row">
+        <span class="imp-label">Dimension</span>
+        <select id="imp-dimension" class="imp-select" onchange="onImpDimChange()">
+          <option value="">— select dimension —</option>
+        </select>
+      </div>
+      <div class="imp-row">
+        <span class="imp-label">Subset</span>
+        <select id="imp-subset" class="imp-select" onchange="onImpSubsetChange()">
+          <option value="">— optional —</option>
+        </select>
+      </div>
     </div>
-    <div class="imp-row">
-      <span class="imp-label">Subset</span>
-      <select id="imp-subset" class="imp-select" onchange="onImpSubsetChange()">
-        <option value="">— optional —</option>
-      </select>
+    <div id="imp-results" style="display:none;margin-top:14px;">
+      <div class="section-lbl" id="imp-results-label"></div>
+      <div id="imp-results-list"></div>
     </div>
+    <div id="imp-empty" class="imp-empty" style="padding:32px 0;">Select a server to see affected books.</div>
   </div>
-  <div id="imp-results" style="display:none;margin-top:20px;">
-    <div class="section-lbl" id="imp-results-label"></div>
-    <div id="imp-results-list"></div>
-  </div>
-  <div id="imp-empty" class="imp-empty">Select a server, then choose a View or Dimension to see which PAW books would be affected by a change.</div>
 </div>
+<div id="dashboard-wrap"></div>
+<div id="activity-wrap" style="display:none;flex:1;overflow-y:auto;padding:18px 20px;"></div>
 
 <div id="detail-drawer">
   <div id="drawer-header">
@@ -475,7 +460,6 @@ function findAncestorIds(targetId, nodes, acc) {
   return null;
 }
 function navigateToBook(bookId) {
-  switchTab('tree');
   const ancestors = findAncestorIds(bookId, TREE) || [];
   ancestors.forEach(function(id) { openIds.add(id); });
   renderTree(getFilteredTree());
@@ -1165,20 +1149,29 @@ function switchTab(tab) {
   document.getElementById('tab-tree-btn').classList.toggle('active', tab === 'tree');
   document.getElementById('tab-dashboard-btn').classList.toggle('active', tab === 'dashboard');
   document.getElementById('tab-activity-btn').classList.toggle('active', tab === 'activity');
-  document.getElementById('tab-impact-btn').classList.toggle('active', tab === 'impact');
   document.getElementById('toolbar').style.display        = tab === 'tree' ? '' : 'none';
-  document.getElementById('tree-wrap').style.display      = tab === 'tree' ? '' : 'none';
+  document.getElementById('tree-area').style.display      = tab === 'tree' ? 'flex' : 'none';
   document.getElementById('dashboard-wrap').style.display = tab === 'dashboard' ? 'block' : 'none';
   document.getElementById('activity-wrap').style.display  = tab === 'activity' ? 'block' : 'none';
-  document.getElementById('impact-wrap').style.display    = tab === 'impact' ? 'block' : 'none';
   if (tab === 'dashboard') {
     if (TREE.length) renderDashboard();
     else document.getElementById('dashboard-wrap').innerHTML =
       '<div style="padding:20px;font-size:11px;color:var(--muted)">Loading tree data — switch back in a moment.</div>';
   }
   if (tab === 'activity') renderActivity();
-  if (tab === 'impact') initImpactTab();
   document.getElementById('detail-drawer').classList.remove('open');
+}
+
+function toggleImpactPanel() {
+  var panel  = document.getElementById('impact-panel');
+  var btn    = document.getElementById('impact-toggle-btn');
+  var isOpen = panel.style.display !== 'none';
+  panel.style.display = isOpen ? 'none' : 'block';
+  btn.classList.toggle('active', !isOpen);
+  if (!isOpen) {
+    loadImpactServers();
+    if (!_impIndexBuilt) buildImpactIndex();
+  }
 }
 
 // ── IMPACT ────────────────────────────────────────────────────────────────────
