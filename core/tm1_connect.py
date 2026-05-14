@@ -9,7 +9,10 @@ import json
 import time
 import threading
 import requests
+import urllib3
 from pathlib import Path
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 SERVERS_FILE = Path(__file__).parent.parent / 'config' / 'servers.json'
 SESSION_TTL  = 600  # 10 minutes
@@ -41,6 +44,7 @@ def _find_profile(db_name: str) -> dict:
                     'db_name':  db['name'],
                     'address':  server['address'],
                     'port':     db['port'],
+                    'ssl':      db.get('ssl', False),
                     'user':     server.get('user', 'admin'),
                     'password': server.get('password', ''),
                 }
@@ -50,9 +54,12 @@ def _find_profile(db_name: str) -> dict:
 def _new_session(profile: dict) -> requests.Session:
     session = requests.Session()
     session.headers.update({'Content-Type': 'application/json'})
-    base = f"http://{profile['address']}:{profile['port']}"
+    scheme = 'https' if profile.get('ssl') else 'http'
+    base = f"{scheme}://{profile['address']}:{profile['port']}"
     session.auth     = (profile['user'], profile['password'])
     session.base_url = f"{base}/api/v1"
+    if profile.get('ssl'):
+        session.verify = False
     return session
 
 

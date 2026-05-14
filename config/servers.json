@@ -5,7 +5,7 @@
     "auth": "v11",
     "user": "admin",
     "password": "apple",
-    "databases": [{"name": "24retail", "port": 52670}]
+    "databases": [{"name": "24retail", "port": 52670, "ssl": false}]
   },
   {
     "name": "GO_New_Stores",
@@ -13,7 +13,7 @@
     "auth": "v11",
     "user": "admin",
     "password": "apple",
-    "databases": [{"name": "GO_New_Stores", "port": 5010}]
+    "databases": [{"name": "GO_New_Stores", "port": 5010, "ssl": true}]
   },
   {
     "name": "GO_Scorecards",
@@ -21,7 +21,7 @@
     "auth": "v11",
     "user": "admin",
     "password": "apple",
-    "databases": [{"name": "GO_Scorecards", "port": 44312}]
+    "databases": [{"name": "GO_Scorecards", "port": 44312, "ssl": true}]
   },
   {
     "name": "Planning Sample",
@@ -29,7 +29,7 @@
     "auth": "v11",
     "user": "admin",
     "password": "apple",
-    "databases": [{"name": "Planning Sample", "port": 12354}]
+    "databases": [{"name": "Planning Sample", "port": 12354, "ssl": true}]
   },
   {
     "name": "Propel_Consolidation",
@@ -37,7 +37,7 @@
     "auth": "v11",
     "user": "admin",
     "password": "apple",
-    "databases": [{"name": "Propel_Consolidation", "port": 8015}]
+    "databases": [{"name": "Propel_Consolidation", "port": 8015, "ssl": true}]
   },
   {
     "name": "proven_techniques",
@@ -45,7 +45,7 @@
     "auth": "v11",
     "user": "admin",
     "password": "apple",
-    "databases": [{"name": "proven_techniques", "port": 5011}]
+    "databases": [{"name": "proven_techniques", "port": 5011, "ssl": true}]
   },
   {
     "name": "SData",
@@ -53,6 +53,6 @@
     "auth": "v11",
     "user": "admin",
     "password": "apple",
-    "databases": [{"name": "SData", "port": 8010}]
+    "databases": [{"name": "SData", "port": 8010, "ssl": true}]
   }
 ]
