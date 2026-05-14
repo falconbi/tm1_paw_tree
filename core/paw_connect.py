@@ -10,6 +10,8 @@ PAW_HOST     = os.environ['PAW_HOST']
 PAW_USERNAME = os.environ.get('PAW_USERNAME', '')
 PAW_PASSWORD = os.environ.get('PAW_PASSWORD', '')
 
+PAW_CONFIG = {'paw_host': PAW_HOST}
+
 
 def get_paw_session() -> requests.Session:
     """Authenticate with PAW V11 native auth and return a session."""
